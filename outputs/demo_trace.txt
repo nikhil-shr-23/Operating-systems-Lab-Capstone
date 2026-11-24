@@ -2,7 +2,7 @@
  OSRM - Operating System Resource Manager Simulator
  Nikhil Sharma | Roll No 2401010084 | B.Tech CSE (Core), Section C
 ==========================================================================
-Demo run started 2026-11-25 00:11:16
+Demo run started 2026-11-25 00:13:28
 
 Textbook check: FCFS on bursts 24,3,3 (expected avg WT 17)
 ----------------------------------------------------------
@@ -544,57 +544,57 @@ Files written:
 Bash integration: system snapshot (sysinfo.sh)
 ----------------------------------------------
 
-=== System snapshot (2026-11-25 00:11:17) ===
+=== System snapshot (2026-11-25 00:13:29) ===
 OS            : Darwin 24.0.0 (arm64)
 CPU cores     : 8
 Total memory  : 8192 MB
 Disk (/)      : 228Gi total, 9.9Gi used, 8.0Gi free (56% used)
-Process count : 428
+Process count : 426
 Top 5 processes by CPU%:
   PID        %CPU   %MEM  COMMAND
-  7353       96.4    0.9  Python
-  565        77.5    0.3  fileproviderd
-  3194       35.6    0.2  ApplicationsStorageExtension
-  3154       26.9    0.7  Storage
-  370        13.1    0.7  WindowServer
+  7654      131.7    5.6  Google Chrome Helper (Aperitif Renderer)
+  7727       87.6    0.9  Python
+  4338       69.9    3.1  Antigravity IDE Helper (Renderer)
+  565        35.5    0.3  fileproviderd
+  3194       20.8    0.2  ApplicationsStorageExtension
 
 Bash integration: log summary (log_summary.sh)
 ----------------------------------------------
 
 === Log summary: /Users/nikhilsharma/Documents/oslabb/osrm/logs/osrm.log ===
-Total records : 837
+Total records : 1063
 
 By level:
   ERROR      1
-  INFO       799
-  WARNING    37
+  INFO       1020
+  WARNING    42
 
 By module:
-  bashtools    6
-  deadlock     46
-  main         29
-  memory       347
-  reporting    65
-  scheduler    50
-  storage      294
+  bashtools    9
+  deadlock     62
+  main         36
+  memory       470
+  reporting    79
+  scheduler    65
+  storage      342
 
 Level x module:
-  bashtools INFO         6
-  deadlock INFO          46
+  bashtools INFO         9
+  deadlock INFO          62
   main ERROR             1
-  main INFO              27
+  main INFO              34
   main WARNING           1
-  memory INFO            347
-  reporting INFO         65
-  scheduler INFO         50
-  storage INFO           258
-  storage WARNING        36
+  memory INFO            470
+  reporting INFO         79
+  scheduler INFO         65
+  storage INFO           301
+  storage WARNING        41
 
 Last 5 WARNING/ERROR records:
-  2026-11-25 00:11:17 | WARNING | storage | rejected create A: Duplicate file name: A
-  2026-11-25 00:11:17 | WARNING | storage | rejected create H: Insufficient contiguous space for 20 blocks (free=24, largest run=13).
-  2026-11-25 00:11:17 | WARNING | storage | rejected create A: Duplicate file name: A
-  2026-11-25 00:11:17 | WARNING | storage | rejected create A: Duplicate file name: A
-  2026-11-25 00:11:17 | WARNING | storage | rejected create H: Insufficient space: need 21 blocks, only 19 free.
+  2026-11-25 00:13:29 | WARNING | storage | rejected create A: Duplicate file name: A
+  2026-11-25 00:13:29 | WARNING | storage | rejected create H: Insufficient contiguous space for 20 blocks (free=24, largest run=13).
+  2026-11-25 00:13:29 | WARNING | storage | rejected create A: Duplicate file name: A
+  2026-11-25 00:13:29 | WARNING | storage | rejected create A: Duplicate file name: A
+  2026-11-25 00:13:29 | WARNING | storage | rejected create H: Insufficient space: need 21 blocks, only 19 free.
 
 Demo finished OK. Trace saved to outputs/demo_trace.txt

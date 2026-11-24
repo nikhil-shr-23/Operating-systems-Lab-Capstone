@@ -1,8 +1,8 @@
 test_gen_workload_invalid_n (__main__.TestBashTools) ... ok
-test_gen_workload_reproducible_with_seed (__main__.TestBashTools) ... /Users/nikhilsharma/Documents/oslabb/osrm/tests/test_osrm.py:653: ResourceWarning: unclosed file <_io.TextIOWrapper name='/var/folders/hx/qjfcw4jx22vfv_b32j732ygm0000gn/T/tmpw22o8y1g/a.csv' mode='r' encoding='UTF-8'>
+test_gen_workload_reproducible_with_seed (__main__.TestBashTools) ... /Users/nikhilsharma/Documents/oslabb/osrm/tests/test_osrm.py:653: ResourceWarning: unclosed file <_io.TextIOWrapper name='/var/folders/hx/qjfcw4jx22vfv_b32j732ygm0000gn/T/tmpv_2lfe0f/a.csv' mode='r' encoding='UTF-8'>
   self.assertEqual(open(a).read(), open(b).read())
 ResourceWarning: Enable tracemalloc to get the object allocation traceback
-/Users/nikhilsharma/Documents/oslabb/osrm/tests/test_osrm.py:653: ResourceWarning: unclosed file <_io.TextIOWrapper name='/var/folders/hx/qjfcw4jx22vfv_b32j732ygm0000gn/T/tmpw22o8y1g/b.csv' mode='r' encoding='UTF-8'>
+/Users/nikhilsharma/Documents/oslabb/osrm/tests/test_osrm.py:653: ResourceWarning: unclosed file <_io.TextIOWrapper name='/var/folders/hx/qjfcw4jx22vfv_b32j732ygm0000gn/T/tmpv_2lfe0f/b.csv' mode='r' encoding='UTF-8'>
   self.assertEqual(open(a).read(), open(b).read())
 ResourceWarning: Enable tracemalloc to get the object allocation traceback
 ok
@@ -79,7 +79,7 @@ In /Users/nikhilsharma/Library/Python/3.9/lib/python/site-packages/matplotlib/mp
 ok
 test_cli_errors_do_not_traceback (__main__.TestReportingAndCLI) ... ok
 test_cli_valid_commands (__main__.TestReportingAndCLI) ... ok
-test_full_analysis_writes_outputs (__main__.TestReportingAndCLI) ... /Users/nikhilsharma/Documents/oslabb/osrm/tests/test_osrm.py:564: ResourceWarning: unclosed file <_io.TextIOWrapper name='/var/folders/hx/qjfcw4jx22vfv_b32j732ygm0000gn/T/tmplkhz1r6c/analysis_report.md' mode='r' encoding='UTF-8'>
+test_full_analysis_writes_outputs (__main__.TestReportingAndCLI) ... /Users/nikhilsharma/Documents/oslabb/osrm/tests/test_osrm.py:564: ResourceWarning: unclosed file <_io.TextIOWrapper name='/var/folders/hx/qjfcw4jx22vfv_b32j732ygm0000gn/T/tmpulxqvp6c/analysis_report.md' mode='r' encoding='UTF-8'>
   report = open(os.path.join(d, "analysis_report.md")).read()
 ResourceWarning: Enable tracemalloc to get the object allocation traceback
 ok
@@ -110,6 +110,6 @@ test_messages_are_meaningful (__main__.TestValidation) ... ok
 test_missing_and_malformed_json (__main__.TestValidation) ... ok
 
 ----------------------------------------------------------------------
-Ran 88 tests in 2.508s
+Ran 88 tests in 2.435s
 
 OK
