@@ -1,0 +1,4 @@
+method,avg_access_cost,worst_access_cost,free_fragments,external_frag_pct,overhead_entries,extra_blocks,rejected_ops
+contiguous,1.0,1,3,35.0,12,0,2
+linked,6.6,20,0,0.0,77,0,1
+indexed,2.0,2,1,0.0,56,6,2

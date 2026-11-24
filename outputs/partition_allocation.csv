@@ -1,0 +1,16 @@
+strategy,partition,size,process,used,internal_frag
+first,0,100,-,0,0
+first,1,500,P1,212,288
+first,2,200,P3,112,88
+first,3,300,-,0,0
+first,4,600,P2,417,183
+best,0,100,-,0,0
+best,1,500,P2,417,83
+best,2,200,P3,112,88
+best,3,300,P1,212,88
+best,4,600,P4,426,174
+worst,0,100,-,0,0
+worst,1,500,P2,417,83
+worst,2,200,-,0,0
+worst,3,300,P3,112,188
+worst,4,600,P1,212,388

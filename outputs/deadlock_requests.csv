@@ -1,0 +1,4 @@
+pid,request,status,granted
+P1,1 0 2,granted,True
+P4,3 3 0,not_available,False
+P0,0 2 0,unsafe,False

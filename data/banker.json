@@ -1,0 +1,18 @@
+{
+  "_comment": "Silberschatz et al., Operating System Concepts, Banker's algorithm example (5 processes, A=10 B=5 C=7)",
+  "available": [3, 3, 2],
+  "max": [[7, 5, 3], [3, 2, 2], [9, 0, 2], [2, 2, 2], [4, 3, 3]],
+  "allocation": [[0, 1, 0], [2, 0, 0], [3, 0, 2], [2, 1, 1], [0, 0, 2]],
+  "requests": [
+    {"pid": "P1", "request": [1, 0, 2]},
+    {"pid": "P4", "request": [3, 3, 0]},
+    {"pid": "P0", "request": [0, 2, 0]}
+  ],
+  "detection": {
+    "_comment": "Textbook detection example (A=7 B=2 C=6): no deadlock, then P2 requests one more C",
+    "available": [0, 0, 0],
+    "allocation": [[0, 1, 0], [2, 0, 0], [3, 0, 3], [2, 1, 1], [0, 0, 2]],
+    "request_no_deadlock": [[0, 0, 0], [2, 0, 2], [0, 0, 0], [1, 0, 0], [0, 0, 2]],
+    "request_deadlock": [[0, 0, 0], [2, 0, 2], [0, 0, 1], [1, 0, 0], [0, 0, 2]]
+  }
+}

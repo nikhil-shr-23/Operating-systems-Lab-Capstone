@@ -1,0 +1,5 @@
+algorithm,frames_1,frames_2,frames_3,frames_4,frames_5,frames_6,frames_7
+FIFO,20,15,15,10,9,6,6
+LRU,20,17,12,8,7,6,6
+Optimal,20,13,9,8,7,6,6
+Clock,20,15,14,9,9,6,6

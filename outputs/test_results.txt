@@ -1,0 +1,115 @@
+test_gen_workload_invalid_n (__main__.TestBashTools) ... ok
+test_gen_workload_reproducible_with_seed (__main__.TestBashTools) ... /Users/nikhilsharma/Documents/oslabb/osrm/tests/test_osrm.py:653: ResourceWarning: unclosed file <_io.TextIOWrapper name='/var/folders/hx/qjfcw4jx22vfv_b32j732ygm0000gn/T/tmpw22o8y1g/a.csv' mode='r' encoding='UTF-8'>
+  self.assertEqual(open(a).read(), open(b).read())
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/Users/nikhilsharma/Documents/oslabb/osrm/tests/test_osrm.py:653: ResourceWarning: unclosed file <_io.TextIOWrapper name='/var/folders/hx/qjfcw4jx22vfv_b32j732ygm0000gn/T/tmpw22o8y1g/b.csv' mode='r' encoding='UTF-8'>
+  self.assertEqual(open(a).read(), open(b).read())
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_gen_workload_roundtrip (__main__.TestBashTools) ... ok
+test_log_summary (__main__.TestBashTools) ... ok
+test_log_summary_missing_file (__main__.TestBashTools) ... ok
+test_missing_script_and_timeout (__main__.TestBashTools) ... ok
+test_script_rejects_bad_args_directly (__main__.TestBashTools) ... ok
+test_sysinfo_content (__main__.TestBashTools) ... ok
+test_detection_textbook (__main__.TestDeadlock) ... ok
+test_detection_validation (__main__.TestDeadlock) ... ok
+test_matrix_validation (__main__.TestDeadlock) ... ok
+test_need_matrix (__main__.TestDeadlock) ... ok
+test_request_exceeds_need (__main__.TestDeadlock) ... ok
+test_request_validation (__main__.TestDeadlock) ... ok
+test_rollback_restores_state (__main__.TestDeadlock) ... ok
+test_safe_sequence (__main__.TestDeadlock) ... ok
+test_sample_file_matches_textbook (__main__.TestDeadlock) ... ok
+test_textbook_request_chain (__main__.TestDeadlock) ... ok
+test_unsafe_initial_state (__main__.TestDeadlock) ... ok
+test_zero_request_is_granted (__main__.TestDeadlock) ... ok
+test_all_requests_one_side (__main__.TestDisk) ... ok
+test_boundaries_zero_and_last_cylinder (__main__.TestDisk) ... ok
+test_cscan_jump_is_counted (__main__.TestDisk) ... ok
+test_direction_down (__main__.TestDisk) ... ok
+test_empty_queue (__main__.TestDisk) ... ok
+test_request_at_head (__main__.TestDisk) ... ok
+test_single_cylinder_disk (__main__.TestDisk) ... ok
+test_textbook_totals (__main__.TestDisk) ... ok
+test_validation (__main__.TestDisk) ... ok
+test_boundary_fill_disk_exactly (__main__.TestFileAllocation) ... ok
+test_comparison_on_sample_workload (__main__.TestFileAllocation) ... ok
+test_contiguous_allocation_and_bitmap (__main__.TestFileAllocation) ... ok
+test_delete_frees_blocks (__main__.TestFileAllocation) ... ok
+test_external_fragmentation_blocks_contiguous_only (__main__.TestFileAllocation) ... ok
+test_indexed_needs_extra_block (__main__.TestFileAllocation) ... ok
+test_invalid_disk_size (__main__.TestFileAllocation) ... ok
+test_linked_and_indexed_costs (__main__.TestFileAllocation) ... ok
+test_rejections_do_not_change_state (__main__.TestFileAllocation) ... ok
+test_belady_anomaly (__main__.TestMemory) ... ok
+test_boundary_frames_exceed_unique_pages (__main__.TestMemory) ... ok
+test_boundary_one_frame (__main__.TestMemory) ... ok
+test_clock_between_bounds (__main__.TestMemory) ... ok
+test_invalid_inputs (__main__.TestMemory) ... ok
+test_optimal_never_worse (__main__.TestMemory) ... ok
+test_partition_fits (__main__.TestMemory) ... ok
+test_partition_invalid (__main__.TestMemory) ... ok
+test_partition_unallocated_and_internal_frag (__main__.TestMemory) ... ok
+test_reference_string_parsing (__main__.TestMemory) ... ok
+test_single_reference (__main__.TestMemory) ... ok
+test_sweep_shape (__main__.TestMemory) ... ok
+test_textbook_three_frames (__main__.TestMemory) ... ok
+test_trace_and_hit_ratio (__main__.TestMemory) ... ok
+test_bad_input_reprompts (__main__.TestMenuRobustness) ... ok
+test_custom_data_with_retry (__main__.TestMenuRobustness) ... ok
+test_eof_is_clean (__main__.TestMenuRobustness) ... ok
+test_eof_midway (__main__.TestMenuRobustness) ... ok
+test_exit_immediately (__main__.TestMenuRobustness) ... ok
+test_full_analysis_option_exists_in_menu (__main__.TestMenuRobustness) ... ok
+test_keyboard_interrupt_is_clean (__main__.TestMenuRobustness) ... ok
+test_memory_custom_reference_string (__main__.TestMenuRobustness) ... ok
+test_scheduling_via_menu_sample_data (__main__.TestMenuRobustness) ... ok
+test_ascii_bar_fallback_when_matplotlib_missing (__main__.TestReportingAndCLI) ... ok
+test_charts_written_when_matplotlib_present (__main__.TestReportingAndCLI) ... /Users/nikhilsharma/Library/Python/3.9/lib/python/site-packages/matplotlib/_fontconfig_pattern.py:64: PyparsingDeprecationWarning: 'oneOf' deprecated - use 'one_of'
+  prop = Group((name + Suppress("=") + comma_separated(value)) | oneOf(_CONSTANTS))
+/Users/nikhilsharma/Library/Python/3.9/lib/python/site-packages/matplotlib/_fontconfig_pattern.py:85: PyparsingDeprecationWarning: 'parseString' deprecated - use 'parse_string'
+  parse = parser.parseString(pattern)
+/Users/nikhilsharma/Library/Python/3.9/lib/python/site-packages/matplotlib/_fontconfig_pattern.py:89: PyparsingDeprecationWarning: 'resetCache' deprecated - use 'reset_cache'
+  parser.resetCache()
+/Users/nikhilsharma/Library/Python/3.9/lib/python/site-packages/matplotlib/_mathtext.py:45: PyparsingDeprecationWarning: 'enablePackrat' deprecated - use 'enable_packrat'
+  ParserElement.enablePackrat()
+In /Users/nikhilsharma/Library/Python/3.9/lib/python/site-packages/matplotlib/mpl-data/stylelib/classic.mplstyle: 'parseString' deprecated - use 'parse_string'
+In /Users/nikhilsharma/Library/Python/3.9/lib/python/site-packages/matplotlib/mpl-data/stylelib/classic.mplstyle: 'resetCache' deprecated - use 'reset_cache'
+ok
+test_cli_errors_do_not_traceback (__main__.TestReportingAndCLI) ... ok
+test_cli_valid_commands (__main__.TestReportingAndCLI) ... ok
+test_full_analysis_writes_outputs (__main__.TestReportingAndCLI) ... /Users/nikhilsharma/Documents/oslabb/osrm/tests/test_osrm.py:564: ResourceWarning: unclosed file <_io.TextIOWrapper name='/var/folders/hx/qjfcw4jx22vfv_b32j732ygm0000gn/T/tmplkhz1r6c/analysis_report.md' mode='r' encoding='UTF-8'>
+  report = open(os.path.join(d, "analysis_report.md")).read()
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_logging_format (__main__.TestReportingAndCLI) ... /Users/nikhilsharma/Documents/oslabb/osrm/tests/test_osrm.py:571: ResourceWarning: unclosed file <_io.TextIOWrapper name='/Users/nikhilsharma/Documents/oslabb/osrm/logs/test.log' mode='r' encoding='UTF-8'>
+  line = [l for l in open(log_path()).read().splitlines() if "| scheduler |" in l][-1]
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_table_and_gantt (__main__.TestReportingAndCLI) ... ok
+test_boundary_single_process_burst_one (__main__.TestScheduler) ... ok
+test_context_switches_rr (__main__.TestScheduler) ... ok
+test_csv_errors (__main__.TestScheduler) ... ok
+test_csv_loading_valid_and_sample (__main__.TestScheduler) ... ok
+test_directory_as_file (__main__.TestScheduler) ... ok
+test_fcfs_textbook (__main__.TestScheduler) ... ok
+test_idle_gap_every_algorithm (__main__.TestScheduler) ... ok
+test_idle_gap_handled (__main__.TestScheduler) ... ok
+test_invalid_processes (__main__.TestScheduler) ... ok
+test_invalid_quantum (__main__.TestScheduler) ... ok
+test_metrics_identity (__main__.TestScheduler) ... ok
+test_priority_lower_number_first (__main__.TestScheduler) ... ok
+test_quantum_larger_than_bursts_equals_fcfs (__main__.TestScheduler) ... ok
+test_rr_textbook (__main__.TestScheduler) ... ok
+test_sjf_textbook (__main__.TestScheduler) ... ok
+test_srtf_preempts (__main__.TestScheduler) ... ok
+test_unknown_algorithm_and_empty (__main__.TestScheduler) ... ok
+test_frames_and_quantum (__main__.TestValidation) ... ok
+test_messages_are_meaningful (__main__.TestValidation) ... ok
+test_missing_and_malformed_json (__main__.TestValidation) ... ok
+
+----------------------------------------------------------------------
+Ran 88 tests in 2.508s
+
+OK
