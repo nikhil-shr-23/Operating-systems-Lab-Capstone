@@ -1,136 +1,65 @@
-# OSRM - Operating System Resource Manager Simulator
+# Disk Scheduling Simulator
 
 **Author:** Nikhil Sharma | Roll No 2401010084 | B.Tech CSE (Core), Section C
 
-OSRM is one integrated Python + Bash application that simulates the major resource-management
-functions of an operating system and presents the results as tables, charts and an automatically
-generated technical analysis. The Python core uses only the standard library (matplotlib is optional);
-three Bash scripts are called from Python through `subprocess`.
+A Python (standard library only; matplotlib optional) simulator and visualiser for disk-head
+scheduling algorithms: **FCFS, SSTF, SCAN, C-SCAN, LOOK, C-LOOK**. Two Bash helper scripts are
+called from Python through `subprocess`.
 
-## Overview
+## What it does
 
-| Area | What is simulated |
+| Feature | Detail |
 |---|---|
-| CPU scheduling | FCFS, SJF (non-preemptive), SRTF, Priority (non-preemptive, lower number = higher priority), Round Robin; Gantt chart, completion/TAT/WT/RT, averages, CPU utilisation, throughput, context switches, idle gaps |
-| Memory | Page replacement FIFO / LRU / Optimal / Clock with frame-by-frame traces, frames sweep 1..7, Belady's anomaly; fixed-partition first/best/worst fit with internal fragmentation |
-| Deadlock | Banker's algorithm (safety trace, requests with rollback) and deadlock detection |
-| Storage | Disk scheduling FCFS, SSTF, SCAN, C-SCAN, LOOK, C-LOOK; file allocation (contiguous / linked / indexed) on a bitmap-managed simulated disk |
-| Reporting | Text tables, CSV export, labelled charts, auto-generated observations in `outputs/analysis_report.md` |
-| Bash integration | `gen_workload.sh`, `sysinfo.sh`, `log_summary.sh` |
+| Algorithms | FCFS, SSTF, SCAN, C-SCAN, LOOK, C-LOOK, with a configurable start direction |
+| Metrics | Total head movement, average seek per request, total seek time (ms/cylinder), service order |
+| Visualiser | Step-by-step ASCII head movement in the terminal; PNG panel of all six head paths |
+| Analysis | Comparison table and bar chart, random-queue experiment (mean movement vs queue length), auto-generated observations in `outputs/analysis_report.md` |
+| Input | Sample file, JSON workloads, command-line flags, or interactive prompts, all validated |
+| Bash integration | `gen_requests.sh` (seeded random workload), `sysinfo.sh`, `log_summary.sh` |
 
-## Architecture
+Conventions: SCAN/C-SCAN go to the physical disk edge before turning, LOOK/C-LOOK only to the last
+request, and the C-SCAN/C-LOOK return jump **is counted** as head movement.
 
-```
-                         run.sh  (Bash launcher)
-                            |
-                         main.py  (menu + argparse: menu/demo/sched/memory/deadlock/storage/analyze)
-                            |
-   +-------------+----------+----------+-------------+
-   | scheduler   |  memory  | deadlock |   storage   |   <- core simulation modules (pure logic)
-   +------+------+----+-----+----+-----+------+------+
-          |           |          |            |
-          +-----------+----+-----+------------+
-                           |
-        validation.py (ValidationError)   logger.py (logs/osrm.log)
-                           |
-        reporting.py (tables, CSV, charts, observations)   bashtools.py --subprocess--> scripts/*.sh
-```
+## Layout
 
 ```
-osrm/
-  main.py  run.sh  README.md
-  modules/  scheduler.py memory.py deadlock.py storage.py validation.py logger.py reporting.py bashtools.py
-  scripts/  sysinfo.sh gen_workload.sh log_summary.sh
-  data/     processes.csv memory.json banker.json disk.json
-  tests/    test_osrm.py
-  outputs/  traces, CSVs, charts, analysis_report.md, demo_trace.txt, test_results.txt
-  logs/     osrm.log
-  screenshots/  docs/ (REPORT.pdf)
+main.py  run.sh  README.md
+modules/  disk.py (algorithms)  validation.py  reporting.py  logger.py  bashtools.py
+scripts/  gen_requests.sh  sysinfo.sh  log_summary.sh
+data/     disk.json            (sample: queue 98 183 37 122 14 124 65 67, head 53, 200 cylinders)
+tests/    test_disk.py
+outputs/  generated tables, CSVs, charts, analysis_report.md, demo_trace.txt
+logs/     osrm.log
 ```
 
-## Requirements
-
-* macOS (or Linux) with `/usr/bin/python3` 3.7+ (developed on macOS, Python 3.9, bash 3.2). Nothing to install for core features.
-* Optional: `matplotlib` for PNG charts (`/usr/bin/python3 -m pip install --user matplotlib`). Without it OSRM prints ASCII bar charts and says so.
-
-## Install and run (macOS)
+## Run (macOS or Linux, Python 3.7+)
 
 ```bash
-unzip osrm.zip && cd osrm
-chmod +x run.sh scripts/*.sh        # only needed if the zip lost permissions
-./run.sh menu                       # interactive menu (default)
-./run.sh demo                       # everything, non-interactive -> outputs/demo_trace.txt
-./run.sh test                       # unit tests -> outputs/test_results.txt
-./run.sh gen-workload 12 42         # random workload CSV (12 processes, seed 42) -> outputs/generated_workload.csv
-./run.sh sysinfo                    # live system snapshot
-./run.sh logsummary                 # awk/grep summary of logs/osrm.log
-./run.sh clean                      # delete generated outputs, logs, caches
+./run.sh menu                 # interactive menu (default)
+./run.sh demo                 # everything, non-interactive -> outputs/demo_trace.txt
+./run.sh analyze              # tables, CSVs, charts, experiment, report -> outputs/
+./run.sh test                 # unit tests -> outputs/test_results.txt
+./run.sh gen 12 42            # 12 random requests, seed 42 -> outputs/generated_requests.json
+./run.sh sysinfo | logsummary | clean
 ```
 
-### Example commands
+Optional charts: `python3 -m pip install --user matplotlib`. Without it ASCII charts are printed.
+
+### Examples
 
 ```bash
-python3 main.py sched --algo rr --quantum 3
-python3 main.py sched --file outputs/generated_workload.csv --algo all
-python3 main.py memory --refs "7 0 1 2 0 3 0 4 2 3 0 3 2 1 2 0 1 7 0 1" --frames 3
-python3 main.py memory --belady --no-trace --sweep
-python3 main.py memory --partitions --no-trace
-python3 main.py deadlock                       # sample data + requests + detection
-python3 main.py deadlock --request P1:1,0,2 --request P0:0,2,0
-python3 main.py storage --queue "98 183 37 122 14 124 65 67" --head 53 --size 200 --direction up
-python3 main.py analyze                        # all modules, charts, report
+python3 main.py simulate                                   # all six algorithms, sample data
+python3 main.py simulate --algo cscan --visual             # watch the head move, step by step
+python3 main.py simulate --queue "98 183 37 122 14 124 65 67" --head 53 --size 200 --direction down
+python3 main.py simulate --explain --seek-ms 0.2
+python3 main.py gen 20 --seed 1 --size 500 --out outputs/w.json && python3 main.py simulate --file outputs/w.json
+python3 main.py analyze --trials 500
 ```
 
-The menu offers: 1 Scheduling, 2 Memory, 3 Deadlock, 4 Storage, 5 Full analysis, 6 Bash tools, 7 View log, 0 Exit.
-Each module lets you use the sample data or type your own; bad input re-prompts, and EOF / Ctrl+C exit cleanly.
+Expected totals for the sample: FCFS 640, SSTF 236, SCAN 331, C-SCAN 382, LOOK 299, C-LOOK 322.
 
-## Sample input formats
+## Errors
 
-`data/processes.csv` (priority optional, lower number = higher priority):
-```
-pid,arrival,burst,priority
-P1,0,8,3
-P2,1,4,1
-```
-`data/memory.json` - `reference_string`, `frames`, `max_frames`, `belady_string`, `partitions`, `processes` (`[name, size]`).
-`data/banker.json` - `available`, `max`, `allocation`, `requests` (`{pid, request}`) and a `detection` block. The default data is the Silberschatz textbook example.
-`data/disk.json` - `requests`, `head`, `disk_size`, `direction`, `total_blocks`, `file_ops` (`{op: create|delete, name, size}`).
-
-## Design decisions worth knowing
-
-* **Disk scheduling:** SCAN and C-SCAN go to the physical disk edge; LOOK / C-LOOK stop at the last request. **The C-SCAN return jump (e.g. 199 -> 0) is counted as head movement** (that is why the textbook result is 382). C-LOOK's jump is counted too.
-* **Round Robin:** a process arriving during a slice is queued before the pre-empted process is re-queued.
-* **Context switch** = CPU handed to a different process than the previous one (first dispatch is not counted).
-* **CPU utilisation** = busy time / (last completion - first arrival).
-* **File allocation overhead** = metadata entries (contiguous: start+length; linked: one pointer per block; indexed: one entry per block + an index block). Failed allocations never modify the disk.
-
-## Running the tests
-
-```bash
-./run.sh test          # or: /usr/bin/python3 tests/test_osrm.py -v
-```
-The suite (unittest) covers valid, invalid and boundary inputs and asserts the textbook values
-(FCFS 17, SJF 7, RR 5.67; FIFO 15 / LRU 12 / Optimal 9 faults; Belady 9 -> 10; Banker's sequence
-P1,P3,P4,P0,P2 with the three request outcomes; disk totals 640/236/331/382/299/322). Tests log to
-`logs/test.log`, so `logs/osrm.log` only holds application runs.
-
-## Logging
-
-Every action and error is written by the `logging` module to `logs/osrm.log` as
-`time | LEVEL | module | message`. `./run.sh logsummary` summarises it by level and module.
-
-## Project-phase mapping
-
-| Phase | Where it lives |
-|---|---|
-| 1. System Design and Planning | Architecture + data-structure design (this README, `docs/REPORT.pdf`), module split, input formats in `data/` |
-| 2. Core Resource-Management Modules | `modules/scheduler.py`, `memory.py`, `deadlock.py`, `storage.py`, `scripts/*.sh`, `bashtools.py` |
-| 3. Analysis and Comparison | `modules/reporting.py`, `main.py analyze`, `outputs/*.csv`, charts, `outputs/analysis_report.md` |
-| 4. Testing and Reliability | `tests/test_osrm.py`, `modules/validation.py`, `modules/logger.py`, `outputs/test_results.txt` |
-| 5. Documentation and Demonstration | `README.md`, `docs/REPORT.pdf`, `screenshots/`, `./run.sh demo`, `outputs/demo_trace.txt` |
-
-## Limitations
-
-Single-CPU, single-threaded simulation with integer time units; flat directory and no real I/O;
-disk scheduling treats all requests as present at time 0; partition allocation is static (no compaction);
-Clock uses a simple reference-bit model; file-allocation overhead is counted in entries, not bytes.
+Bad input (head outside the disk, non-numeric requests, unknown algorithm, missing or malformed
+file...) prints `Error: <message>` and exits with code 2. No tracebacks. Everything is logged to
+`logs/osrm.log` as `time | LEVEL | module | message`.

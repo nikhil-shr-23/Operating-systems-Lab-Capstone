@@ -1,600 +1,263 @@
 ==========================================================================
- OSRM - Operating System Resource Manager Simulator
+ Disk Scheduling Simulator
  Nikhil Sharma | Roll No 2401010084 | B.Tech CSE (Core), Section C
 ==========================================================================
-Demo run started 2026-11-25 00:13:28
-
-Textbook check: FCFS on bursts 24,3,3 (expected avg WT 17)
-----------------------------------------------------------
-
-
-Scheduling: FCFS
-----------------
-
-Gantt chart:
-  |           P1           | P2 | P3 |
-  0                        24   27  30
-
-+-----+---------+-------+------+------------+-----+----+----+
-| PID | Arrival | Burst | Prio | Completion | TAT | WT | RT |
-+-----+---------+-------+------+------------+-----+----+----+
-| P1  |       0 |    24 |    0 |         24 |  24 |  0 |  0 |
-| P2  |       0 |     3 |    0 |         27 |  27 | 24 | 24 |
-| P3  |       0 |     3 |    0 |         30 |  30 | 27 | 27 |
-+-----+---------+-------+------+------------+-----+----+----+
-
-Average WT  = 17.00   Average TAT = 27.00   Average RT = 17.00
-CPU utilisation = 100.00%   Throughput = 0.100 proc/unit   Context switches = 2   Idle time = 0
-
-Bash integration: generate workload (gen_workload.sh 8 2024) and schedule it
-----------------------------------------------------------------------------
-
-Generated: outputs/generated_workload.csv
-pid,arrival,burst,priority
-P1,6,9,2
-P2,12,6,2
-P3,8,2,3
-P4,11,5,5
-P5,0,2,1
-P6,11,20,4
-P7,11,7,1
-P8,4,9,4
-
-Scheduling comparison
----------------------
-+-----------+--------+---------+--------+------------+------------+--------------+
-| Algorithm | Avg WT | Avg TAT | Avg RT | CPU util % | Throughput | Ctx switches |
-+-----------+--------+---------+--------+------------+------------+--------------+
-| FCFS      |  16.75 |   24.25 |  16.75 |      96.77 |      0.129 |            7 |
-| SJF       |  11.25 |   18.75 |  11.25 |      96.77 |      0.129 |            7 |
-| SRTF      |  10.88 |   18.38 |  10.62 |      96.77 |      0.129 |            8 |
-| Priority  |  16.50 |   24.00 |  16.50 |      96.77 |      0.129 |            7 |
-| RR        |  22.50 |   30.00 |   7.12 |      96.77 |      0.129 |           16 |
-+-----------+--------+---------+--------+------------+------------+--------------+
-
-[1/4] CPU SCHEDULING
---------------------
-
-Workload: data/processes.csv (6 processes)
-
-Scheduling: FCFS
-----------------
-
-Gantt chart:
-  |   P1   | P2 |    P3   |  P4 | P5 | idle | P6 |
-  0        8    12        21    26   28     30  33
-
-+-----+---------+-------+------+------------+-----+----+----+
-| PID | Arrival | Burst | Prio | Completion | TAT | WT | RT |
-+-----+---------+-------+------+------------+-----+----+----+
-| P1  |       0 |     8 |    3 |          8 |   8 |  0 |  0 |
-| P2  |       1 |     4 |    1 |         12 |  11 |  7 |  7 |
-| P3  |       2 |     9 |    4 |         21 |  19 | 10 | 10 |
-| P4  |       3 |     5 |    2 |         26 |  23 | 18 | 18 |
-| P5  |       4 |     2 |    5 |         28 |  24 | 22 | 22 |
-| P6  |      30 |     3 |    2 |         33 |   3 |  0 |  0 |
-+-----+---------+-------+------+------------+-----+----+----+
-
-Average WT  = 9.50   Average TAT = 14.67   Average RT = 9.50
-CPU utilisation = 93.94%   Throughput = 0.182 proc/unit   Context switches = 5   Idle time = 2
-
-Scheduling: SJF
----------------
-
-Gantt chart:
-  |   P1   | P5 | P2 |  P4 |    P3   | idle | P6 |
-  0        8    10   14    19        28     30  33
-
-+-----+---------+-------+------+------------+-----+----+----+
-| PID | Arrival | Burst | Prio | Completion | TAT | WT | RT |
-+-----+---------+-------+------+------------+-----+----+----+
-| P1  |       0 |     8 |    3 |          8 |   8 |  0 |  0 |
-| P2  |       1 |     4 |    1 |         14 |  13 |  9 |  9 |
-| P3  |       2 |     9 |    4 |         28 |  26 | 17 | 17 |
-| P4  |       3 |     5 |    2 |         19 |  16 | 11 | 11 |
-| P5  |       4 |     2 |    5 |         10 |   6 |  4 |  4 |
-| P6  |      30 |     3 |    2 |         33 |   3 |  0 |  0 |
-+-----+---------+-------+------+------------+-----+----+----+
-
-Average WT  = 6.83   Average TAT = 12.00   Average RT = 6.83
-CPU utilisation = 93.94%   Throughput = 0.182 proc/unit   Context switches = 5   Idle time = 2
-
-Scheduling: SRTF
-----------------
-
-Gantt chart:
-  | P1 | P2 | P5 |  P4 |   P1  |    P3   | idle | P6 |
-  0    1    5    7     12      19        28     30  33
-
-+-----+---------+-------+------+------------+-----+----+----+
-| PID | Arrival | Burst | Prio | Completion | TAT | WT | RT |
-+-----+---------+-------+------+------------+-----+----+----+
-| P1  |       0 |     8 |    3 |         19 |  19 | 11 |  0 |
-| P2  |       1 |     4 |    1 |          5 |   4 |  0 |  0 |
-| P3  |       2 |     9 |    4 |         28 |  26 | 17 | 17 |
-| P4  |       3 |     5 |    2 |         12 |   9 |  4 |  4 |
-| P5  |       4 |     2 |    5 |          7 |   3 |  1 |  1 |
-| P6  |      30 |     3 |    2 |         33 |   3 |  0 |  0 |
-+-----+---------+-------+------+------------+-----+----+----+
-
-Average WT  = 5.50   Average TAT = 10.67   Average RT = 3.67
-CPU utilisation = 93.94%   Throughput = 0.182 proc/unit   Context switches = 6   Idle time = 2
-
-Scheduling: Priority
---------------------
-
-Gantt chart:
-  |   P1   | P2 |  P4 |    P3   | P5 | idle | P6 |
-  0        8    12    17        26   28     30  33
-
-+-----+---------+-------+------+------------+-----+----+----+
-| PID | Arrival | Burst | Prio | Completion | TAT | WT | RT |
-+-----+---------+-------+------+------------+-----+----+----+
-| P1  |       0 |     8 |    3 |          8 |   8 |  0 |  0 |
-| P2  |       1 |     4 |    1 |         12 |  11 |  7 |  7 |
-| P3  |       2 |     9 |    4 |         26 |  24 | 15 | 15 |
-| P4  |       3 |     5 |    2 |         17 |  14 |  9 |  9 |
-| P5  |       4 |     2 |    5 |         28 |  24 | 22 | 22 |
-| P6  |      30 |     3 |    2 |         33 |   3 |  0 |  0 |
-+-----+---------+-------+------+------------+-----+----+----+
-
-Average WT  = 8.83   Average TAT = 14.00   Average RT = 8.83
-CPU utilisation = 93.94%   Throughput = 0.182 proc/unit   Context switches = 5   Idle time = 2
-
-Scheduling: RR (quantum=4)
---------------------------
-
-Gantt chart:
-  | P1 | P2 | P3 | P4 | P5 | P1 | P3 | P4 | P3 | idle | P6 |
-  0    4    8    12   16   18   22   26   27   28     30  33
-
-+-----+---------+-------+------+------------+-----+----+----+
-| PID | Arrival | Burst | Prio | Completion | TAT | WT | RT |
-+-----+---------+-------+------+------------+-----+----+----+
-| P1  |       0 |     8 |    3 |         22 |  22 | 14 |  0 |
-| P2  |       1 |     4 |    1 |          8 |   7 |  3 |  3 |
-| P3  |       2 |     9 |    4 |         28 |  26 | 17 |  6 |
-| P4  |       3 |     5 |    2 |         27 |  24 | 19 |  9 |
-| P5  |       4 |     2 |    5 |         18 |  14 | 12 | 12 |
-| P6  |      30 |     3 |    2 |         33 |   3 |  0 |  0 |
-+-----+---------+-------+------+------------+-----+----+----+
-
-Average WT  = 10.83   Average TAT = 16.00   Average RT = 5.00
-CPU utilisation = 93.94%   Throughput = 0.182 proc/unit   Context switches = 9   Idle time = 2
-
-Scheduling comparison
----------------------
-+-----------+--------+---------+--------+------------+------------+--------------+
-| Algorithm | Avg WT | Avg TAT | Avg RT | CPU util % | Throughput | Ctx switches |
-+-----------+--------+---------+--------+------------+------------+--------------+
-| FCFS      |   9.50 |   14.67 |   9.50 |      93.94 |      0.182 |            5 |
-| SJF       |   6.83 |   12.00 |   6.83 |      93.94 |      0.182 |            5 |
-| SRTF      |   5.50 |   10.67 |   3.67 |      93.94 |      0.182 |            6 |
-| Priority  |   8.83 |   14.00 |   8.83 |      93.94 |      0.182 |            5 |
-| RR        |  10.83 |   16.00 |   5.00 |      93.94 |      0.182 |            9 |
-+-----------+--------+---------+--------+------------+------------+--------------+
-
-[2/4] MEMORY MANAGEMENT
------------------------
-
-Reference string: 7 0 1 2 0 3 0 4 2 3 0 3 2 1 2 0 1 7 0 1   Frames: 3
-
-Page replacement: FIFO, 3 frame(s)
-----------------------------------
-
-+------+------+----+----+----+--------+---------+
-| Step | Page | F1 | F2 | F3 | Result | Evicted |
-+------+------+----+----+----+--------+---------+
-|    1 |    7 |  7 |  - |  - | FAULT  |         |
-|    2 |    0 |  7 |  0 |  - | FAULT  |         |
-|    3 |    1 |  7 |  0 |  1 | FAULT  |         |
-|    4 |    2 |  2 |  0 |  1 | FAULT  | 7       |
-|    5 |    0 |  2 |  0 |  1 | hit    |         |
-|    6 |    3 |  2 |  3 |  1 | FAULT  | 0       |
-|    7 |    0 |  2 |  3 |  0 | FAULT  | 1       |
-|    8 |    4 |  4 |  3 |  0 | FAULT  | 2       |
-|    9 |    2 |  4 |  2 |  0 | FAULT  | 3       |
-|   10 |    3 |  4 |  2 |  3 | FAULT  | 0       |
-|   11 |    0 |  0 |  2 |  3 | FAULT  | 4       |
-|   12 |    3 |  0 |  2 |  3 | hit    |         |
-|   13 |    2 |  0 |  2 |  3 | hit    |         |
-|   14 |    1 |  0 |  1 |  3 | FAULT  | 2       |
-|   15 |    2 |  0 |  1 |  2 | FAULT  | 3       |
-|   16 |    0 |  0 |  1 |  2 | hit    |         |
-|   17 |    1 |  0 |  1 |  2 | hit    |         |
-|   18 |    7 |  7 |  1 |  2 | FAULT  | 0       |
-|   19 |    0 |  7 |  0 |  2 | FAULT  | 1       |
-|   20 |    1 |  7 |  0 |  1 | FAULT  | 2       |
-+------+------+----+----+----+--------+---------+
-Faults = 15   Hits = 5   Hit ratio = 25.0%
-
-Page replacement: LRU, 3 frame(s)
----------------------------------
-
-+------+------+----+----+----+--------+---------+
-| Step | Page | F1 | F2 | F3 | Result | Evicted |
-+------+------+----+----+----+--------+---------+
-|    1 |    7 |  7 |  - |  - | FAULT  |         |
-|    2 |    0 |  7 |  0 |  - | FAULT  |         |
-|    3 |    1 |  7 |  0 |  1 | FAULT  |         |
-|    4 |    2 |  2 |  0 |  1 | FAULT  | 7       |
-|    5 |    0 |  2 |  0 |  1 | hit    |         |
-|    6 |    3 |  2 |  0 |  3 | FAULT  | 1       |
-|    7 |    0 |  2 |  0 |  3 | hit    |         |
-|    8 |    4 |  4 |  0 |  3 | FAULT  | 2       |
-|    9 |    2 |  4 |  0 |  2 | FAULT  | 3       |
-|   10 |    3 |  4 |  3 |  2 | FAULT  | 0       |
-|   11 |    0 |  0 |  3 |  2 | FAULT  | 4       |
-|   12 |    3 |  0 |  3 |  2 | hit    |         |
-|   13 |    2 |  0 |  3 |  2 | hit    |         |
-|   14 |    1 |  1 |  3 |  2 | FAULT  | 0       |
-|   15 |    2 |  1 |  3 |  2 | hit    |         |
-|   16 |    0 |  1 |  0 |  2 | FAULT  | 3       |
-|   17 |    1 |  1 |  0 |  2 | hit    |         |
-|   18 |    7 |  1 |  0 |  7 | FAULT  | 2       |
-|   19 |    0 |  1 |  0 |  7 | hit    |         |
-|   20 |    1 |  1 |  0 |  7 | hit    |         |
-+------+------+----+----+----+--------+---------+
-Faults = 12   Hits = 8   Hit ratio = 40.0%
-
-Page replacement: Optimal, 3 frame(s)
--------------------------------------
-
-+------+------+----+----+----+--------+---------+
-| Step | Page | F1 | F2 | F3 | Result | Evicted |
-+------+------+----+----+----+--------+---------+
-|    1 |    7 |  7 |  - |  - | FAULT  |         |
-|    2 |    0 |  7 |  0 |  - | FAULT  |         |
-|    3 |    1 |  7 |  0 |  1 | FAULT  |         |
-|    4 |    2 |  2 |  0 |  1 | FAULT  | 7       |
-|    5 |    0 |  2 |  0 |  1 | hit    |         |
-|    6 |    3 |  2 |  0 |  3 | FAULT  | 1       |
-|    7 |    0 |  2 |  0 |  3 | hit    |         |
-|    8 |    4 |  2 |  4 |  3 | FAULT  | 0       |
-|    9 |    2 |  2 |  4 |  3 | hit    |         |
-|   10 |    3 |  2 |  4 |  3 | hit    |         |
-|   11 |    0 |  2 |  0 |  3 | FAULT  | 4       |
-|   12 |    3 |  2 |  0 |  3 | hit    |         |
-|   13 |    2 |  2 |  0 |  3 | hit    |         |
-|   14 |    1 |  2 |  0 |  1 | FAULT  | 3       |
-|   15 |    2 |  2 |  0 |  1 | hit    |         |
-|   16 |    0 |  2 |  0 |  1 | hit    |         |
-|   17 |    1 |  2 |  0 |  1 | hit    |         |
-|   18 |    7 |  7 |  0 |  1 | FAULT  | 2       |
-|   19 |    0 |  7 |  0 |  1 | hit    |         |
-|   20 |    1 |  7 |  0 |  1 | hit    |         |
-+------+------+----+----+----+--------+---------+
-Faults = 9   Hits = 11   Hit ratio = 55.0%
-
-Page replacement: Clock, 3 frame(s)
------------------------------------
-
-+------+------+----+----+----+--------+---------+
-| Step | Page | F1 | F2 | F3 | Result | Evicted |
-+------+------+----+----+----+--------+---------+
-|    1 |    7 |  7 |  - |  - | FAULT  |         |
-|    2 |    0 |  7 |  0 |  - | FAULT  |         |
-|    3 |    1 |  7 |  0 |  1 | FAULT  |         |
-|    4 |    2 |  2 |  0 |  1 | FAULT  | 7       |
-|    5 |    0 |  2 |  0 |  1 | hit    |         |
-|    6 |    3 |  2 |  0 |  3 | FAULT  | 1       |
-|    7 |    0 |  2 |  0 |  3 | hit    |         |
-|    8 |    4 |  4 |  0 |  3 | FAULT  | 2       |
-|    9 |    2 |  4 |  2 |  3 | FAULT  | 0       |
-|   10 |    3 |  4 |  2 |  3 | hit    |         |
-|   11 |    0 |  4 |  2 |  0 | FAULT  | 3       |
-|   12 |    3 |  3 |  2 |  0 | FAULT  | 4       |
-|   13 |    2 |  3 |  2 |  0 | hit    |         |
-|   14 |    1 |  3 |  1 |  0 | FAULT  | 2       |
-|   15 |    2 |  3 |  1 |  2 | FAULT  | 0       |
-|   16 |    0 |  0 |  1 |  2 | FAULT  | 3       |
-|   17 |    1 |  0 |  1 |  2 | hit    |         |
-|   18 |    7 |  0 |  7 |  2 | FAULT  | 1       |
-|   19 |    0 |  0 |  7 |  2 | hit    |         |
-|   20 |    1 |  0 |  7 |  1 | FAULT  | 2       |
-+------+------+----+----+----+--------+---------+
-Faults = 14   Hits = 6   Hit ratio = 30.0%
-
-Page replacement comparison
----------------------------
-
-+-----------+--------+--------+------+-----------+
-| Algorithm | Frames | Faults | Hits | Hit ratio |
-+-----------+--------+--------+------+-----------+
-| FIFO      |      3 |     15 |    5 |     25.0% |
-| LRU       |      3 |     12 |    8 |     40.0% |
-| Optimal   |      3 |      9 |   11 |     55.0% |
-| Clock     |      3 |     14 |    6 |     30.0% |
-+-----------+--------+--------+------+-----------+
-
-Page faults vs number of frames (1..7)
---------------------------------------
-
-+-----------+------+------+------+------+------+------+------+
-| Algorithm | 1 fr | 2 fr | 3 fr | 4 fr | 5 fr | 6 fr | 7 fr |
-+-----------+------+------+------+------+------+------+------+
-| FIFO      |   20 |   15 |   15 |   10 |    9 |    6 |    6 |
-| LRU       |   20 |   17 |   12 |    8 |    7 |    6 |    6 |
-| Optimal   |   20 |   13 |    9 |    8 |    7 |    6 |    6 |
-| Clock     |   20 |   15 |   14 |    9 |    9 |    6 |    6 |
-+-----------+------+------+------+------+------+------+------+
-
-Belady's anomaly check: reference string 1 2 3 4 1 2 5 1 2 3 4 5
-----------------------------------------------------------------
-
-+-----------+------+------+------+------+------+------+------+
-| Algorithm | 1 fr | 2 fr | 3 fr | 4 fr | 5 fr | 6 fr | 7 fr |
-+-----------+------+------+------+------+------+------+------+
-| FIFO      |   12 |   12 |    9 |   10 |    5 |    5 |    5 |
-| LRU       |   12 |   12 |   10 |    8 |    5 |    5 |    5 |
-| Optimal   |   12 |    9 |    7 |    6 |    5 |    5 |    5 |
-| Clock     |   12 |   12 |    9 |   10 |    5 |    5 |    5 |
-+-----------+------+------+------+------+------+------+------+
-ANOMALY: FIFO has 9 faults with 3 frames but 10 faults with 4 frames.
-LRU: no anomaly (faults never increase with more frames).
-Optimal: no anomaly (faults never increase with more frames).
-
-Partition allocation: first fit
--------------------------------
-
-+-----------+------+---------+------+---------------+
-| Partition | Size | Process | Used | Internal frag |
-+-----------+------+---------+------+---------------+
-|         0 |  100 | -       |    0 |             0 |
-|         1 |  500 | P1      |  212 |           288 |
-|         2 |  200 | P3      |  112 |            88 |
-|         3 |  300 | -       |    0 |             0 |
-|         4 |  600 | P2      |  417 |           183 |
-+-----------+------+---------+------+---------------+
-Total internal fragmentation = 559   Memory utilisation = 43.6%   Unallocated = P4, P5
-
-Partition allocation: best fit
-------------------------------
-
-+-----------+------+---------+------+---------------+
-| Partition | Size | Process | Used | Internal frag |
-+-----------+------+---------+------+---------------+
-|         0 |  100 | -       |    0 |             0 |
-|         1 |  500 | P2      |  417 |            83 |
-|         2 |  200 | P3      |  112 |            88 |
-|         3 |  300 | P1      |  212 |            88 |
-|         4 |  600 | P4      |  426 |           174 |
-+-----------+------+---------+------+---------------+
-Total internal fragmentation = 433   Memory utilisation = 68.6%   Unallocated = P5
-
-Partition allocation: worst fit
--------------------------------
-
-+-----------+------+---------+------+---------------+
-| Partition | Size | Process | Used | Internal frag |
-+-----------+------+---------+------+---------------+
-|         0 |  100 | -       |    0 |             0 |
-|         1 |  500 | P2      |  417 |            83 |
-|         2 |  200 | -       |    0 |             0 |
-|         3 |  300 | P3      |  112 |           188 |
-|         4 |  600 | P1      |  212 |           388 |
-+-----------+------+---------+------+---------------+
-Total internal fragmentation = 659   Memory utilisation = 43.6%   Unallocated = P4, P5
-
-Fit strategy comparison
------------------------
-
-+----------+---------------+-------------+---------------+
-| Strategy | Internal frag | Unallocated | Utilisation % |
-+----------+---------------+-------------+---------------+
-| first    |           559 | P4, P5      |          43.6 |
-| best     |           433 | P5          |          68.6 |
-| worst    |           659 | P4, P5      |          43.6 |
-+----------+---------------+-------------+---------------+
-
-[3/4] DEADLOCK HANDLING
------------------------
-
-
-Banker's algorithm - current state
-----------------------------------
-
-+---------+-------+------------+-------+
-| Process | Max   | Allocation | Need  |
-+---------+-------+------------+-------+
-| P0      | 7 5 3 | 0 1 0      | 7 4 3 |
-| P1      | 3 2 2 | 2 0 0      | 1 2 2 |
-| P2      | 9 0 2 | 3 0 2      | 6 0 0 |
-| P3      | 2 2 2 | 2 1 1      | 0 1 1 |
-| P4      | 4 3 3 | 0 0 2      | 4 3 1 |
-+---------+-------+------------+-------+
-Available = [3, 3, 2]
-
-Safety algorithm
-----------------
-
-  Work = [3, 3, 2]
-  P1: Need [1, 2, 2] <= Work [3, 3, 2] -> runs to completion, Work = [5, 3, 2]
-  P3: Need [0, 1, 1] <= Work [5, 3, 2] -> runs to completion, Work = [7, 4, 3]
-  P4: Need [4, 3, 1] <= Work [7, 4, 3] -> runs to completion, Work = [7, 4, 5]
-  P0: Need [7, 4, 3] <= Work [7, 4, 5] -> runs to completion, Work = [7, 5, 5]
-  P2: Need [6, 0, 0] <= Work [7, 5, 5] -> runs to completion, Work = [10, 5, 7]
-Result: SAFE, sequence <P1, P3, P4, P0, P2>
-
-Request: P1 asks for [1, 0, 2]
-  P1 request [1, 0, 2] GRANTED; safe sequence P1, P3, P4, P0, P2
-  new state is safe: P1, P3, P4, P0, P2
-
-Request: P4 asks for [3, 3, 0]
-  P4 requested [3, 3, 0] but only [2, 3, 0] available -> DENIED (must wait)
-
-Request: P0 asks for [0, 2, 0]
-  P0 request [0, 2, 0] would leave the system UNSAFE -> DENIED, state rolled back
-
-Deadlock detection
-------------------
-
-Scenario 1 (no outstanding blocking requests)
-  Work = [0, 0, 0]
-  P0 can finish (Request [0, 0, 0] <= Work) -> Work = [0, 1, 0]
-  P2 can finish (Request [0, 0, 0] <= Work) -> Work = [3, 1, 3]
-  P3 can finish (Request [1, 0, 0] <= Work) -> Work = [5, 2, 4]
-  P4 can finish (Request [0, 0, 2] <= Work) -> Work = [5, 2, 6]
-  P1 can finish (Request [2, 0, 2] <= Work) -> Work = [7, 2, 6]
-  Deadlocked: none
-Scenario 2 (P2 requests one more unit of C)
-  Work = [0, 0, 0]
-  P0 can finish (Request [0, 0, 0] <= Work) -> Work = [0, 1, 0]
-  Deadlocked: P1, P2, P3, P4
-
-[4/4] STORAGE MANAGEMENT
+Demo run started 2026-11-25 11:33:06
+
+Textbook check: queue 98 183 37 122 14 124 65 67, head 53 (expected SCAN = 331)
+-------------------------------------------------------------------------------
+
+
+Disk scheduling (head=53, disk size=200, direction=up, 8 requests)
+------------------------------------------------------------------
+
++-----------+----------------+----------+---------+-------------------------------------------------------------------+
+| Algorithm | Total movement | Avg seek | Seek ms | Head path                                                         |
++-----------+----------------+----------+---------+-------------------------------------------------------------------+
+| FCFS      |            640 |    80.00 |     640 | 53 -> 98 -> 183 -> 37 -> 122 -> 14 -> 124 -> 65 -> 67             |
+| SSTF *    |            236 |    29.50 |     236 | 53 -> 65 -> 67 -> 37 -> 14 -> 98 -> 122 -> 124 -> 183             |
+| SCAN      |            331 |    41.38 |     331 | 53 -> 65 -> 67 -> 98 -> 122 -> 124 -> 183 -> 199 -> 37 -> 14      |
+| C-SCAN    |            382 |    47.75 |     382 | 53 -> 65 -> 67 -> 98 -> 122 -> 124 -> 183 -> 199 -> 0 -> 14 -> 37 |
+| LOOK      |            299 |    37.38 |     299 | 53 -> 65 -> 67 -> 98 -> 122 -> 124 -> 183 -> 37 -> 14             |
+| C-LOOK    |            322 |    40.25 |     322 | 53 -> 65 -> 67 -> 98 -> 122 -> 124 -> 183 -> 14 -> 37             |
++-----------+----------------+----------+---------+-------------------------------------------------------------------+
+* lowest movement: SSTF (236 cylinders). C-SCAN/C-LOOK return jumps are counted.
+
+How each algorithm works
 ------------------------
 
+  FCFS    First-Come First-Served: serve requests in arrival order (fair, but long seeks).
+  SSTF    Shortest Seek Time First: always go to the nearest request (low movement, may starve).
+  SCAN    Elevator: sweep to the disk edge, then reverse, serving requests on the way.
+  C-SCAN  Circular SCAN: sweep one way only; jump back to the other edge and sweep again.
+  LOOK    Like SCAN, but reverse at the last request instead of the disk edge.
+  C-LOOK  Like C-SCAN, but jump back to the farthest pending request, not the edge.
 
-Disk scheduling (head=53, disk size=200, direction=up)
-------------------------------------------------------
+Head movement: FCFS  (total 640 cylinders)
+------------------------------------------
 
-+-----------+----------------+-------------------------------------------------------------------+
-| Algorithm | Total movement | Head path                                                         |
-+-----------+----------------+-------------------------------------------------------------------+
-| FCFS      |            640 | 53 -> 98 -> 183 -> 37 -> 122 -> 14 -> 124 -> 65 -> 67             |
-| SSTF      |            236 | 53 -> 65 -> 67 -> 37 -> 14 -> 98 -> 122 -> 124 -> 183             |
-| SCAN      |            331 | 53 -> 65 -> 67 -> 98 -> 122 -> 124 -> 183 -> 199 -> 37 -> 14      |
-| C-SCAN    |            382 | 53 -> 65 -> 67 -> 98 -> 122 -> 124 -> 183 -> 199 -> 0 -> 14 -> 37 |
-| LOOK      |            299 | 53 -> 65 -> 67 -> 98 -> 122 -> 124 -> 183 -> 37 -> 14             |
-| C-LOOK    |            322 | 53 -> 65 -> 67 -> 98 -> 122 -> 124 -> 183 -> 14 -> 37             |
-+-----------+----------------+-------------------------------------------------------------------+
-Lowest movement: SSTF (236 cylinders). C-SCAN/C-LOOK return jumps are counted.
+      cylinder  0                                                        199
+      --------------------------------------------------------------
+  0    53 |................H...........................................| start
+  1    98 |.............................#..............................| +45
+  2   183 |......................................................#.....| +85
+  3    37 |...........#................................................| +146
+  4   122 |....................................#.......................| +85
+  5    14 |....#.......................................................| +108
+  6   124 |.....................................#......................| +110
+  7    65 |...................#........................................| +59
+  8    67 |....................#.......................................| +2
 
-File allocation comparison
---------------------------
+Head movement: SSTF  (total 236 cylinders)
+------------------------------------------
 
-+-------------------+------------+--------+---------+
-| Metric            | contiguous | linked | indexed |
-+-------------------+------------+--------+---------+
-| Files created     |          6 |      7 |       6 |
-| Blocks used       |         50 |     70 |      56 |
-| Blocks free       |         20 |      0 |      14 |
-| Free fragments    |          3 |      0 |       1 |
-| Largest free run  |         13 |      0 |      14 |
-| External frag %   |       35.0 |    0.0 |     0.0 |
-| Avg access cost   |        1.0 |    6.6 |     2.0 |
-| Worst access cost |          1 |     20 |       2 |
-| Metadata entries  |         12 |     77 |      56 |
-| Index blocks      |          0 |      0 |       6 |
-| Rejected ops      |          2 |      1 |       2 |
-+-------------------+------------+--------+---------+
+      cylinder  0                                                        199
+      --------------------------------------------------------------
+  0    53 |................H...........................................| start
+  1    65 |...................#........................................| +12
+  2    67 |....................#.......................................| +2
+  3    37 |...........#................................................| +30
+  4    14 |....#.......................................................| +23
+  5    98 |.............................#..............................| +84
+  6   122 |....................................#.......................| +24
+  7   124 |.....................................#......................| +2
+  8   183 |......................................................#.....| +59
 
-contiguous disk map ('#' used, '.' free):
-############..##########.....#####################
-#######.............
-  rejected [create A]: Duplicate file name: A
-  rejected [create H]: Insufficient contiguous space for 20 blocks (free=24, largest run=13).
+Head movement: SCAN  (total 331 cylinders)
+------------------------------------------
 
-linked disk map ('#' used, '.' free):
-##################################################
-####################
-  rejected [create A]: Duplicate file name: A
+      cylinder  0                                                        199
+      --------------------------------------------------------------
+  0    53 |................H...........................................| start
+  1    65 |...................#........................................| +12
+  2    67 |....................#.......................................| +2
+  3    98 |.............................#..............................| +31
+  4   122 |....................................#.......................| +24
+  5   124 |.....................................#......................| +2
+  6   183 |......................................................#.....| +59
+  7   199 |...........................................................o| +16 (turn/edge)
+  8    37 |...........#................................................| +162
+  9    14 |....#.......................................................| +23
 
-indexed disk map ('#' used, '.' free):
-##################################################
-######..............
-  rejected [create A]: Duplicate file name: A
-  rejected [create H]: Insufficient space: need 21 blocks, only 19 free.
+Head movement: C-SCAN  (total 382 cylinders)
+--------------------------------------------
 
-Technical observations
-----------------------
+      cylinder  0                                                        199
+      --------------------------------------------------------------
+  0    53 |................H...........................................| start
+  1    65 |...................#........................................| +12
+  2    67 |....................#.......................................| +2
+  3    98 |.............................#..............................| +31
+  4   122 |....................................#.......................| +24
+  5   124 |.....................................#......................| +2
+  6   183 |......................................................#.....| +59
+  7   199 |...........................................................o| +16 (turn/edge)
+  8     0 |o...........................................................| +199 (turn/edge)
+  9    14 |....#.......................................................| +14
+ 10    37 |...........#................................................| +23
 
- * Lowest average waiting time: SRTF (5.50) versus RR (10.83), a 49% reduction - it always runs the job with the least remaining work and preempts on arrival, which minimises the time other jobs spend queued.
- * Best average response time: SRTF (3.67).
- * Round Robin (q=4) performed 9 context switches against 5 for FCFS; its avg TAT is 16.00 vs 14.67 for FCFS, showing the fairness/overhead trade-off.
- * FCFS shows the convoy effect: P5 waits 22 units because earlier arrivals run to completion first.
- * Priority scheduling makes P5 (priority 5) wait 22 units - low-priority work can starve; aging would be needed in a real OS.
- * The workload contains an idle gap (2 units); CPU utilisation is 93.9% for every algorithm because total work is fixed and only ordering changes.
- * With 3 frames the ranking by page faults is Optimal=9 < LRU=12 < Clock=14 < FIFO=15. Optimal (9) is the theoretical lower bound; LRU (12) approximates it by using the past as a predictor of the future, while FIFO (15) ignores usage and evicts hot pages.
- * Clock (second chance) gave 14 faults - between FIFO and LRU - at the cost of one reference bit per frame instead of full timestamps.
- * Increasing frames reduces faults until every distinct page fits; in the sweep all algorithms converge to the same minimum (6 faults) once frames >= distinct pages.
- * Belady's anomaly reproduced: FIFO on 1 2 3 4 1 2 5 1 2 3 4 5 incurs 9 faults with 3 frames but 10 faults with 4 frames (more memory, more faults).
- * LRU and Optimal never showed the anomaly: they are stack algorithms, so the set of pages in memory with n frames is always a subset of the set with n+1 frames.
- * Fixed-partition allocation: best fit gave the best result (1 unallocated, internal fragmentation 433); first fit: 2 unallocated, frag 559; best fit: 1 unallocated, frag 433; worst fit: 2 unallocated, frag 659.
- * Initial state is SAFE with safe sequence <P1, P3, P4, P0, P2>.
- * Request: P1 request [1, 0, 2] GRANTED; safe sequence P1, P3, P4, P0, P2.
- * Request: P4 requested [3, 3, 0] but only [2, 3, 0] available -> DENIED (must wait).
- * Request: P0 request [0, 2, 0] would leave the system UNSAFE -> DENIED, state rolled back.
- * Banker's algorithm denies requests that would lead to an unsafe state, even though resources are available - avoidance trades some utilisation for a guarantee of freedom from deadlock.
- * Detection: the first scenario has no deadlock; after P2 asks for one more resource the deadlocked set is P1, P2, P3, P4. Detection must be paired with a recovery policy (kill or roll back).
- * Disk scheduling: SSTF moves the head least (236 cylinders); FCFS is the worst (640), 171% more.
- * LOOK saves 32 cylinders over SCAN (299 vs 331) by turning at the last request instead of the disk edge; C-LOOK saves 60 over C-SCAN.
- * SSTF has low movement but can starve distant requests; C-SCAN/C-LOOK trade extra movement (the return jump is counted) for more uniform waiting time.
- * File allocation: contiguous allocation gives the cheapest access (avg 1.00 block reads) but left 3 free fragments (external fragmentation 35.0%) and rejected 2 operation(s); linked and indexed use any free block so they rejected 1 and 2.
- * Linked allocation has the worst direct-access cost (avg 6.60, worst 20 reads, since blocks are reached by following pointers); indexed costs a constant 2 reads but spends 6 extra index block(s).
+Head movement: LOOK  (total 299 cylinders)
+------------------------------------------
 
-Files written:
-  outputs/scheduling_traces.txt
-  outputs/scheduling_summary.csv
-  outputs/scheduling_per_process.csv
-  outputs/scheduling_comparison.png
-  outputs/page_faults_sweep.csv
-  outputs/belady_sweep.csv
-  outputs/page_faults_vs_frames.png
-  outputs/belady_anomaly.png
-  outputs/partition_allocation.csv
-  outputs/deadlock_requests.csv
+      cylinder  0                                                        199
+      --------------------------------------------------------------
+  0    53 |................H...........................................| start
+  1    65 |...................#........................................| +12
+  2    67 |....................#.......................................| +2
+  3    98 |.............................#..............................| +31
+  4   122 |....................................#.......................| +24
+  5   124 |.....................................#......................| +2
+  6   183 |......................................................#.....| +59
+  7    37 |...........#................................................| +146
+  8    14 |....#.......................................................| +23
+
+Head movement: C-LOOK  (total 322 cylinders)
+--------------------------------------------
+
+      cylinder  0                                                        199
+      --------------------------------------------------------------
+  0    53 |................H...........................................| start
+  1    65 |...................#........................................| +12
+  2    67 |....................#.......................................| +2
+  3    98 |.............................#..............................| +31
+  4   122 |....................................#.......................| +24
+  5   124 |.....................................#......................| +2
+  6   183 |......................................................#.....| +59
+  7    14 |....#.......................................................| +169
+  8    37 |...........#................................................| +23
+
+Same queue, head moving down
+----------------------------
+
+
+Disk scheduling (head=53, disk size=200, direction=down, 8 requests)
+--------------------------------------------------------------------
+
++-----------+----------------+----------+---------+-------------------------------------------------------------------+
+| Algorithm | Total movement | Avg seek | Seek ms | Head path                                                         |
++-----------+----------------+----------+---------+-------------------------------------------------------------------+
+| FCFS      |            640 |    80.00 |     640 | 53 -> 98 -> 183 -> 37 -> 122 -> 14 -> 124 -> 65 -> 67             |
+| SSTF      |            236 |    29.50 |     236 | 53 -> 65 -> 67 -> 37 -> 14 -> 98 -> 122 -> 124 -> 183             |
+| SCAN      |            236 |    29.50 |     236 | 53 -> 37 -> 14 -> 0 -> 65 -> 67 -> 98 -> 122 -> 124 -> 183        |
+| C-SCAN    |            386 |    48.25 |     386 | 53 -> 37 -> 14 -> 0 -> 199 -> 183 -> 124 -> 122 -> 98 -> 67 -> 65 |
+| LOOK *    |            208 |    26.00 |     208 | 53 -> 37 -> 14 -> 65 -> 67 -> 98 -> 122 -> 124 -> 183             |
+| C-LOOK    |            326 |    40.75 |     326 | 53 -> 37 -> 14 -> 183 -> 124 -> 122 -> 98 -> 67 -> 65             |
++-----------+----------------+----------+---------+-------------------------------------------------------------------+
+* lowest movement: LOOK (208 cylinders). C-SCAN/C-LOOK return jumps are counted.
+
+Bash integration: generate random requests (gen_requests.sh 12 2024)
+--------------------------------------------------------------------
+
+Generated: outputs/generated_requests.json
+{
+  "requests": [24, 33, 126, 129, 133, 161, 1, 129, 65, 26, 30, 112],
+  "head": 37,
+  "disk_size": 200,
+  "direction": "up"
+}
+
+Disk scheduling (head=37, disk size=200, direction=up, 12 requests)
+-------------------------------------------------------------------
+
++-----------+----------------+----------+---------+--------------------------------------------------------------------------------------+
+| Algorithm | Total movement | Avg seek | Seek ms | Head path                                                                            |
++-----------+----------------+----------+---------+--------------------------------------------------------------------------------------+
+| FCFS      |            627 |    52.25 |     627 | 37 -> 24 -> 33 -> 126 -> 129 -> 133 -> 161 -> 1 -> 129 -> 65 -> 26 -> 30 -> 112      |
+| SSTF *    |            196 |    16.33 |     196 | 37 -> 33 -> 30 -> 26 -> 24 -> 1 -> 65 -> 112 -> 126 -> 129 -> 133 -> 161             |
+| SCAN      |            360 |    30.00 |     360 | 37 -> 65 -> 112 -> 126 -> 129 -> 133 -> 161 -> 199 -> 33 -> 30 -> 26 -> 24 -> 1      |
+| C-SCAN    |            394 |    32.83 |     394 | 37 -> 65 -> 112 -> 126 -> 129 -> 133 -> 161 -> 199 -> 0 -> 1 -> 24 -> 26 -> 30 -> 33 |
+| LOOK      |            284 |    23.67 |     284 | 37 -> 65 -> 112 -> 126 -> 129 -> 133 -> 161 -> 33 -> 30 -> 26 -> 24 -> 1             |
+| C-LOOK    |            316 |    26.33 |     316 | 37 -> 65 -> 112 -> 126 -> 129 -> 133 -> 161 -> 1 -> 24 -> 26 -> 30 -> 33             |
++-----------+----------------+----------+---------+--------------------------------------------------------------------------------------+
+* lowest movement: SSTF (196 cylinders). C-SCAN/C-LOOK return jumps are counted.
+
+Disk scheduling (head=53, disk size=200, direction=up, 8 requests)
+------------------------------------------------------------------
+
++-----------+----------------+----------+---------+-------------------------------------------------------------------+
+| Algorithm | Total movement | Avg seek | Seek ms | Head path                                                         |
++-----------+----------------+----------+---------+-------------------------------------------------------------------+
+| FCFS      |            640 |    80.00 |     640 | 53 -> 98 -> 183 -> 37 -> 122 -> 14 -> 124 -> 65 -> 67             |
+| SSTF *    |            236 |    29.50 |     236 | 53 -> 65 -> 67 -> 37 -> 14 -> 98 -> 122 -> 124 -> 183             |
+| SCAN      |            331 |    41.38 |     331 | 53 -> 65 -> 67 -> 98 -> 122 -> 124 -> 183 -> 199 -> 37 -> 14      |
+| C-SCAN    |            382 |    47.75 |     382 | 53 -> 65 -> 67 -> 98 -> 122 -> 124 -> 183 -> 199 -> 0 -> 14 -> 37 |
+| LOOK      |            299 |    37.38 |     299 | 53 -> 65 -> 67 -> 98 -> 122 -> 124 -> 183 -> 37 -> 14             |
+| C-LOOK    |            322 |    40.25 |     322 | 53 -> 65 -> 67 -> 98 -> 122 -> 124 -> 183 -> 14 -> 37             |
++-----------+----------------+----------+---------+-------------------------------------------------------------------+
+* lowest movement: SSTF (236 cylinders). C-SCAN/C-LOOK return jumps are counted.
+
+Random-queue experiment (200 trials per point, seed 2024)
+---------------------------------------------------------
+
++-----------+-------+-------+--------+--------+--------+
+| Algorithm |   n=5 |  n=10 |   n=20 |   n=40 |   n=80 |
++-----------+-------+-------+--------+--------+--------+
+| FCFS      |   345 | 674.4 | 1320.6 | 2655.6 | 5404.1 |
+| SSTF      |   171 | 225.8 |    255 |  280.4 |  286.2 |
+| SCAN      | 234.7 | 272.6 |  282.3 |  280.7 |    294 |
+| C-SCAN    | 335.5 | 359.7 |  383.2 |  387.7 |  393.1 |
+| LOOK      | 188.9 |   241 |  266.5 |  272.5 |  289.7 |
+| C-LOOK    | 235.4 | 301.8 |  349.4 |  370.9 |  385.1 |
++-----------+-------+-------+--------+--------+--------+
+
+Observations
+------------
+
+  - SSTF moves the head least (236 cylinders); FCFS is the worst (640), 171% more.
+  - LOOK saves 32 cylinders over SCAN (299 vs 331) by turning at the last request instead of the disk edge; C-LOOK saves 60 over C-SCAN.
+  - FCFS is fair but ignores head position (avg seek 80.0 vs 29.5 for SSTF).
+  - SSTF has low movement but can starve distant requests; C-SCAN/C-LOOK trade extra movement (the return jump is counted) for more uniform waiting time.
+  - Over random queues, SSTF has the lowest mean movement at the longest queue (80 requests): 286.2 cylinders vs 5404.1 for FCFS.
+  - FCFS grows almost linearly with queue length, while the SCAN family flattens because each sweep serves more requests per pass.
+
+Files written
+-------------
+
   outputs/disk_head_movement.csv
   outputs/disk_head_movement.png
-  outputs/allocation_comparison.csv
-  outputs/allocation_comparison.png
+  outputs/disk_head_paths.png
+  outputs/random_experiment.csv
+  outputs/movement_vs_queue_length.png
   outputs/analysis_report.md
 
 Bash integration: system snapshot (sysinfo.sh)
 ----------------------------------------------
 
-=== System snapshot (2026-11-25 00:13:29) ===
+=== System snapshot (2026-11-25 11:33:08) ===
 OS            : Darwin 24.0.0 (arm64)
 CPU cores     : 8
 Total memory  : 8192 MB
-Disk (/)      : 228Gi total, 9.9Gi used, 8.0Gi free (56% used)
-Process count : 426
+Disk (/)      : 228Gi total, 9.9Gi used, 6.7Gi free (60% used)
+Process count : 528
 Top 5 processes by CPU%:
   PID        %CPU   %MEM  COMMAND
-  7654      131.7    5.6  Google Chrome Helper (Aperitif Renderer)
-  7727       87.6    0.9  Python
-  4338       69.9    3.1  Antigravity IDE Helper (Renderer)
-  565        35.5    0.3  fileproviderd
-  3194       20.8    0.2  ApplicationsStorageExtension
+  3640       97.5    0.9  Python
+  607        14.7    0.4  fileproviderd
+  383        13.3    0.6  WindowServer
+  3637        9.6    1.2  Google Chrome Helper (Aperitif Renderer)
+  860         5.3    3.8  Google Chrome
 
 Bash integration: log summary (log_summary.sh)
 ----------------------------------------------
 
 === Log summary: /Users/nikhilsharma/Documents/oslabb/osrm/logs/osrm.log ===
-Total records : 1063
+Total records : 70
 
 By level:
-  ERROR      1
-  INFO       1020
-  WARNING    42
+  INFO       70
 
 By module:
-  bashtools    9
-  deadlock     62
-  main         36
-  memory       470
-  reporting    79
-  scheduler    65
-  storage      342
+  bashtools    6
+  disk         50
+  main         2
+  reporting    12
 
 Level x module:
-  bashtools INFO         9
-  deadlock INFO          62
-  main ERROR             1
-  main INFO              34
-  main WARNING           1
-  memory INFO            470
-  reporting INFO         79
-  scheduler INFO         65
-  storage INFO           301
-  storage WARNING        41
+  bashtools INFO         6
+  disk INFO              50
+  main INFO              2
+  reporting INFO         12
 
 Last 5 WARNING/ERROR records:
-  2026-11-25 00:13:29 | WARNING | storage | rejected create A: Duplicate file name: A
-  2026-11-25 00:13:29 | WARNING | storage | rejected create H: Insufficient contiguous space for 20 blocks (free=24, largest run=13).
-  2026-11-25 00:13:29 | WARNING | storage | rejected create A: Duplicate file name: A
-  2026-11-25 00:13:29 | WARNING | storage | rejected create A: Duplicate file name: A
-  2026-11-25 00:13:29 | WARNING | storage | rejected create H: Insufficient space: need 21 blocks, only 19 free.
 
 Demo finished OK. Trace saved to outputs/demo_trace.txt

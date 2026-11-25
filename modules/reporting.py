@@ -1,14 +1,14 @@
-"""Reporting: text tables, Gantt charts, CSV export, charts and analysis report.
+"""Reporting: text tables, ASCII head-movement visualiser, CSV, charts, analysis report.
 
-Charts use matplotlib when it is installed; otherwise an ASCII bar chart is
+Charts use matplotlib when it is installed; otherwise an ASCII fallback is
 printed instead (set OSRM_NO_MATPLOTLIB=1 to force the fallback).
 """
 import csv
 import os
 
 from modules import AUTHOR, APP_NAME
+from modules.disk import DESCRIPTIONS
 from modules.logger import get_logger
-from modules.scheduler import IDLE
 
 log = get_logger("reporting")
 
@@ -29,12 +29,10 @@ def table(headers, rows, align=None):
             out.append(c.rjust(w) if a == "r" else c.ljust(w))
         return "| " + " | ".join(out) + " |"
     sep = "+-" + "-+-".join("-" * w for w in widths) + "-+"
-    lines = [sep, fmt(headers), sep] + [fmt(r) for r in rows] + [sep]
-    return "\n".join(lines)
+    return "\n".join([sep, fmt(headers), sep] + [fmt(r) for r in rows] + [sep])
 
 
 def banner():
-    """Application banner shown at start-up and in the report."""
     line = "=" * 74
     return "\n".join([line, " " + APP_NAME, " " + AUTHOR, line])
 
@@ -43,129 +41,45 @@ def heading(text):
     return "\n%s\n%s\n" % (text, "-" * len(text))
 
 
-def f2(x):
-    return "%.2f" % x
-
-
-# ------------------------------------------------------------------- Gantt
-def gantt(timeline, max_width=100):
-    """Text Gantt chart (proportional when it fits) with a time axis underneath."""
-    total = timeline[-1][2] - timeline[0][1]
-    scale = 1.0 if total <= max_width - len(timeline) else (max_width - len(timeline)) / float(total)
-    bar, axis, pos = "|", "", 0
-    ticks = []
-    for pid, s, e in timeline:
-        label = "idle" if pid == IDLE else pid
-        width = max(len(label) + 2, int(round((e - s) * scale)))
-        ticks.append((pos, s))
-        cell = label.center(width)
-        bar += cell + "|"
-        pos += width + 1
-    ticks.append((pos - 1, timeline[-1][2]))
-    axis = ""
-    for p, t in ticks:
-        axis = axis.ljust(p) + str(t)
-    return "  " + bar + "\n  " + axis
-
-
-def format_schedule(res):
-    """Gantt + per-process table + aggregate figures for one ScheduleResult."""
-    title = "%s%s" % (res.algo, " (quantum=%d)" % res.quantum if res.algo == "RR" else "")
-    rows = []
-    for pid in res.order:
-        m = res.metrics[pid]
-        rows.append([pid, m["arrival"], m["burst"], m["priority"], m["completion"], m["tat"], m["wt"], m["rt"]])
-    out = [heading("Scheduling: " + title), "Gantt chart:", gantt(res.timeline), "",
-           table(["PID", "Arrival", "Burst", "Prio", "Completion", "TAT", "WT", "RT"], rows, "lrrrrrrr"), "",
-           "Average WT  = %s   Average TAT = %s   Average RT = %s" % (f2(res.avg_wt), f2(res.avg_tat), f2(res.avg_rt)),
-           "CPU utilisation = %s%%   Throughput = %.3f proc/unit   Context switches = %d   Idle time = %d" % (
-               f2(res.utilisation), res.throughput, res.context_switches, res.idle_time)]
-    return "\n".join(out)
-
-
-def schedule_summary_rows(results):
-    return [[r.algo, f2(r.avg_wt), f2(r.avg_tat), f2(r.avg_rt), f2(r.utilisation), "%.3f" % r.throughput,
-             r.context_switches] for r in results]
-
-
-SCHED_HEADERS = ["Algorithm", "Avg WT", "Avg TAT", "Avg RT", "CPU util %", "Throughput", "Ctx switches"]
-
-
-def format_schedule_comparison(results):
-    return heading("Scheduling comparison") + table(SCHED_HEADERS, schedule_summary_rows(results), "lrrrrrr")
-
-
-# ------------------------------------------------------------------ memory
-def format_page_trace(res, refs=None):
-    """Frame-by-frame trace of a page replacement run."""
-    n = res.num_frames
-    head = ["Step", "Page"] + ["F%d" % (i + 1) for i in range(n)] + ["Result", "Evicted"]
-    rows = []
-    for i, s in enumerate(res.steps, 1):
-        rows.append([i, s.page] + ["-" if f is None else f for f in s.frames] +
-                    ["FAULT" if s.fault else "hit", "" if s.evicted is None else s.evicted])
+# --------------------------------------------------------- disk text output
+def format_disk(results, head, size):
+    """Comparison table for all algorithms run on the same input."""
+    best = min(results, key=lambda r: r.total)
+    rows = [[r.algo + (" *" if r.total == best.total else ""), r.total, "%.2f" % r.avg_seek,
+             "%g" % r.seek_time, " -> ".join(map(str, r.path))] for r in results]
     return "\n".join([
-        heading("Page replacement: %s, %d frame(s)" % (res.algo, n)),
-        table(head, rows, "r" * (n + 2) + "ll"),
-        "Faults = %d   Hits = %d   Hit ratio = %.1f%%" % (res.faults, res.hits, 100 * res.hit_ratio)])
+        heading("Disk scheduling (head=%d, disk size=%d, direction=%s, %d requests)" % (
+            head, size, results[0].direction, results[0].n_requests)),
+        table(["Algorithm", "Total movement", "Avg seek", "Seek ms", "Head path"], rows, "lrrrl"),
+        "* lowest movement: %s (%d cylinders). C-SCAN/C-LOOK return jumps are counted." % (best.algo, best.total)])
 
 
-def format_page_comparison(results):
-    rows = [[r.algo, r.num_frames, r.faults, r.hits, "%.1f%%" % (100 * r.hit_ratio)] for r in results]
-    return table(["Algorithm", "Frames", "Faults", "Hits", "Hit ratio"], rows, "lrrrr")
+def ascii_path(res, size, width=60):
+    """Step-by-step terminal visualisation of the head moving across the disk.
 
-
-def format_sweep(sweep):
-    maxf = len(next(iter(sweep.values())))
-    rows = [[a] + v for a, v in sweep.items()]
-    return table(["Algorithm"] + ["%d fr" % f for f in range(1, maxf + 1)], rows, "l" + "r" * maxf)
-
-
-def format_partitions(res):
-    rows = [[r["index"], r["size"], r["process"] or "-", r["used"], r["internal_frag"]] for r in res.partitions]
-    out = [heading("Partition allocation: %s fit" % res.strategy), table(
-        ["Partition", "Size", "Process", "Used", "Internal frag"], rows, "rrlrr"),
-        "Total internal fragmentation = %d   Memory utilisation = %.1f%%   Unallocated = %s" % (
-            res.internal_fragmentation, res.memory_utilisation, ", ".join(res.unallocated) or "none")]
-    return "\n".join(out)
-
-
-# ---------------------------------------------------------------- deadlock
-def format_state(state):
-    need = state.need
-    rows = [["P%d" % i, " ".join(map(str, state.maximum[i])), " ".join(map(str, state.allocation[i])),
-             " ".join(map(str, need[i]))] for i in range(state.n)]
-    return table(["Process", "Max", "Allocation", "Need"], rows) + "\nAvailable = %s" % state.available
-
-
-def format_safety(res):
-    lines = [heading("Safety algorithm")] + ["  " + t for t in res.trace]
-    lines.append("Result: %s" % ("SAFE, sequence <%s>" % ", ".join(res.sequence) if res.safe else "UNSAFE"))
+    '#' marks a served request, 'o' a turn-around / edge visit, 'H' the start.
+    """
+    scale = (width - 1) / float(max(size - 1, 1))
+    served = list(res.service_order)
+    lines = [heading("Head movement: %s  (total %d cylinders)" % (res.algo, res.total)),
+             "      cylinder  0%s%d" % (" " * (width - len(str(size - 1)) - 1), size - 1)]
+    lines.append("      %s" % ("-" * (width + 2)))
+    for i, pos in enumerate(res.path):
+        if i == 0:
+            mark, note = "H", "start"
+        elif pos in served:
+            served.remove(pos)
+            mark, note = "#", "+%d" % abs(pos - res.path[i - 1])
+        else:
+            mark, note = "o", "+%d (turn/edge)" % abs(pos - res.path[i - 1])
+        row = ["."] * width
+        row[int(round(pos * scale))] = mark
+        lines.append("%3d %5d |%s| %s" % (i, pos, "".join(row), note))
     return "\n".join(lines)
 
 
-# ----------------------------------------------------------------- storage
-def format_disk(results, head, size):
-    rows = [[r.algo, r.total, " -> ".join(map(str, r.path))] for r in results]
-    best = min(results, key=lambda r: r.total)
-    return "\n".join([heading("Disk scheduling (head=%d, disk size=%d, direction=%s)" % (
-        head, size, results[0].direction)), table(["Algorithm", "Total movement", "Head path"], rows, "lrl"),
-        "Lowest movement: %s (%d cylinders). C-SCAN/C-LOOK return jumps are counted." % (best.algo, best.total)])
-
-
-def format_alloc(summary):
-    keys = ["created", "used_blocks", "free_blocks", "free_fragments", "largest_free_run",
-            "external_frag_pct", "avg_access_cost", "worst_access_cost", "overhead_entries", "extra_blocks"]
-    names = ["Files created", "Blocks used", "Blocks free", "Free fragments", "Largest free run",
-             "External frag %", "Avg access cost", "Worst access cost", "Metadata entries", "Index blocks"]
-    rows = [[n] + [summary[m][k] for m in summary] for n, k in zip(names, keys)]
-    rows.append(["Rejected ops"] + [len(summary[m]["rejected"]) for m in summary])
-    out = [heading("File allocation comparison"), table(["Metric"] + list(summary), rows, "lrrr")]
-    for m, s in summary.items():
-        out.append("\n%s disk map ('#' used, '.' free):\n%s" % (m, s["map"]))
-        for op, why in s["rejected"]:
-            out.append("  rejected [%s]: %s" % (op, why))
-    return "\n".join(out)
+def describe(results):
+    return "\n".join("  %-7s %s" % (a, DESCRIPTIONS[a]) for a in [r.algo for r in results])
 
 
 # -------------------------------------------------------------------- CSV
@@ -182,7 +96,6 @@ def write_csv(path, headers, rows):
 
 # ----------------------------------------------------------------- charts
 def have_matplotlib():
-    """True when matplotlib can be imported and is not disabled."""
     if os.environ.get("OSRM_NO_MATPLOTLIB"):
         return False
     try:
@@ -218,76 +131,9 @@ def _plt():
     return plt
 
 
-def grouped_bar_chart(path, title, categories, series, ylabel, xlabel=""):
-    """Grouped bars: one group per category, one bar per series name."""
-    if not have_matplotlib():
-        return _fallback(title, series, categories)
-    plt = _plt()
-    fig, ax = plt.subplots(figsize=(9, 4.8))
-    names = list(series)
-    w = 0.8 / len(names)
-    for k, name in enumerate(names):
-        xs = [i + (k - (len(names) - 1) / 2.0) * w for i in range(len(categories))]
-        bars = ax.bar(xs, series[name], w, label=name, color=PALETTE[k % len(PALETTE)])
-        for b, v in zip(bars, series[name]):
-            ax.annotate("%.1f" % v if isinstance(v, float) else str(v), (b.get_x() + b.get_width() / 2, v),
-                        ha="center", va="bottom", fontsize=7, xytext=(0, 2), textcoords="offset points")
-    ax.set_xticks(range(len(categories)))
-    ax.set_xticklabels(categories)
-    ax.set_ylabel(ylabel)
-    ax.set_xlabel(xlabel)
-    ax.set_title(title, fontweight="bold")
-    ax.legend(frameon=False)
-    ax.grid(axis="y", alpha=0.3)
-    fig.text(0.99, 0.01, AUTHOR, ha="right", fontsize=6, color="#777")
-    return _save(fig, plt, path)
-
-
-def bar_chart(path, title, categories, values, ylabel, xlabel="", highlight_min=True):
-    """Single-series bar chart; the lowest bar is highlighted."""
-    if not have_matplotlib():
-        return _fallback(title, {ylabel: values}, categories)
-    plt = _plt()
-    fig, ax = plt.subplots(figsize=(8, 4.6))
-    low = min(values)
-    colors = [PALETTE[2] if (highlight_min and v == low) else PALETTE[0] for v in values]
-    bars = ax.bar(categories, values, color=colors)
-    for b, v in zip(bars, values):
-        ax.annotate(str(v), (b.get_x() + b.get_width() / 2, v), ha="center", va="bottom", fontsize=9,
-                    xytext=(0, 2), textcoords="offset points")
-    ax.set_ylabel(ylabel)
-    ax.set_xlabel(xlabel)
-    ax.set_title(title, fontweight="bold")
-    ax.grid(axis="y", alpha=0.3)
-    fig.text(0.99, 0.01, AUTHOR, ha="right", fontsize=6, color="#777")
-    return _save(fig, plt, path)
-
-
-def line_chart(path, title, xs, series, ylabel, xlabel, mark=None):
-    """Line chart with markers; ``mark`` = (x, y, text) annotates a point."""
-    if not have_matplotlib():
-        return _fallback(title, series, ["%s=%s" % (xlabel, x) for x in xs])
-    plt = _plt()
-    fig, ax = plt.subplots(figsize=(8, 4.8))
-    for k, (name, ys) in enumerate(series.items()):
-        # distinct dash styles / marker sizes keep identical (overlapping) series visible
-        ax.plot(xs, ys, marker="o", label=name, color=PALETTE[k % len(PALETTE)], linewidth=2.2,
-                linestyle=["-", "--", "-.", ":"][k % 4], markersize=9 - 2 * (k % 4))
-    if mark:
-        ax.annotate(mark[2], (mark[0], mark[1]), xytext=(mark[0] + 0.3, mark[1] + 1.2),
-                    arrowprops={"arrowstyle": "->"}, fontsize=9)
-    ax.set_xticks(xs)
-    ax.set_ylabel(ylabel)
-    ax.set_xlabel(xlabel)
-    ax.set_title(title, fontweight="bold")
-    ax.legend(frameon=False)
-    ax.grid(alpha=0.3)
-    fig.text(0.99, 0.01, AUTHOR, ha="right", fontsize=6, color="#777")
-    return _save(fig, plt, path)
-
-
 def _save(fig, plt, path):
     os.makedirs(os.path.dirname(path), exist_ok=True)
+    fig.text(0.99, 0.01, AUTHOR, ha="right", fontsize=6, color="#777")
     fig.tight_layout(rect=(0, 0.02, 1, 1))
     fig.savefig(path, dpi=130)
     plt.close(fig)
@@ -295,134 +141,101 @@ def _save(fig, plt, path):
     return path
 
 
+def bar_chart(path, title, categories, values, ylabel, xlabel=""):
+    """Single-series bar chart; the lowest bar is highlighted."""
+    if not have_matplotlib():
+        return _fallback(title, {ylabel: values}, categories)
+    plt = _plt()
+    fig, ax = plt.subplots(figsize=(8, 4.6))
+    low = min(values)
+    bars = ax.bar(categories, values, color=[PALETTE[2] if v == low else PALETTE[0] for v in values])
+    for b, v in zip(bars, values):
+        ax.annotate(str(v), (b.get_x() + b.get_width() / 2, v), ha="center", va="bottom", fontsize=9,
+                    xytext=(0, 2), textcoords="offset points")
+    ax.set_ylabel(ylabel)
+    ax.set_xlabel(xlabel)
+    ax.set_title(title, fontweight="bold")
+    ax.grid(axis="y", alpha=0.3)
+    return _save(fig, plt, path)
+
+
+def line_chart(path, title, xs, series, ylabel, xlabel):
+    """Line chart with markers, one line per series."""
+    if not have_matplotlib():
+        return _fallback(title, series, ["%s=%s" % (xlabel, x) for x in xs])
+    plt = _plt()
+    fig, ax = plt.subplots(figsize=(8, 4.8))
+    for k, (name, ys) in enumerate(series.items()):
+        ax.plot(xs, ys, marker="o", label=name, color=PALETTE[k % len(PALETTE)], linewidth=2,
+                linestyle=["-", "--", "-.", ":"][k % 4])
+    ax.set_xticks(xs)
+    ax.set_ylabel(ylabel)
+    ax.set_xlabel(xlabel)
+    ax.set_title(title, fontweight="bold")
+    ax.legend(frameon=False)
+    ax.grid(alpha=0.3)
+    return _save(fig, plt, path)
+
+
+def path_grid_chart(path, results, size, head):
+    """One panel per algorithm: cylinder on x, time (step) running downward - the classic head-path plot."""
+    if not have_matplotlib():
+        print("[matplotlib not available - use --visual for the ASCII head-movement view]")
+        return None
+    plt = _plt()
+    fig, axes = plt.subplots(2, 3, figsize=(13, 7.5), sharex=True)
+    for ax, res, color in zip(axes.flat, results, PALETTE):
+        ys = list(range(len(res.path)))
+        ax.plot(res.path, ys, "-", color=color, linewidth=1.8)
+        served = list(res.service_order)
+        for i, p in enumerate(res.path):
+            if i and p in served:
+                served.remove(p)
+                ax.plot(p, i, "o", color=color, markersize=6)
+            elif i:
+                ax.plot(p, i, "o", markerfacecolor="white", color=color, markersize=6)
+        ax.plot(head, 0, "s", color="#222", markersize=7)
+        ax.set_ylim(len(res.path) - 0.5, -0.5)
+        ax.set_xlim(-0.03 * size, 1.03 * size)
+        ax.xaxis.tick_top()
+        ax.set_yticks([])
+        ax.set_title("%s - %d cylinders" % (res.algo, res.total), fontsize=10, fontweight="bold", pad=22)
+        ax.grid(axis="x", alpha=0.25)
+    fig.suptitle("Head movement paths (square = start, filled = served, hollow = turn/edge)", y=0.995)
+    return _save(fig, plt, path)
+
+
 # ------------------------------------------------------------ observations
-def _pct(a, b):
-    return 100.0 * (a - b) / a if a else 0.0
-
-
-def scheduling_observations(results):
-    """Technical observations derived from a list of ScheduleResult."""
+def observations(results, experiment=None):
+    """Plain-English conclusions generated from the numbers of this run."""
+    out = []
     by = dict((r.algo, r) for r in results)
-    out = []
-    best = min(results, key=lambda r: r.avg_wt)
-    worst = max(results, key=lambda r: r.avg_wt)
-    why = {
-        "SRTF": "it always runs the job with the least remaining work and preempts on arrival, which minimises the "
-                "time other jobs spend queued",
-        "SJF": "running short jobs first lets many jobs finish early, so the long job's delay is charged to few "
-               "processes (SJF is provably optimal for average WT among non-preemptive schedules)",
-        "FCFS": "for this arrival pattern the arrival order already happens to be close to shortest-first",
-        "Priority": "the priority numbers in this data happen to favour short jobs",
-        "RR": "frequent switching lets short jobs finish within a few quanta",
-    }
-    out.append("Lowest average waiting time: %s (%.2f) versus %s (%.2f), a %.0f%% reduction - %s." % (
-        best.algo, best.avg_wt, worst.algo, worst.avg_wt, _pct(worst.avg_wt, best.avg_wt), why[best.algo]))
-    best_rt = min(results, key=lambda r: r.avg_rt)
-    out.append("Best average response time: %s (%.2f)%s." % (best_rt.algo, best_rt.avg_rt,
-               " - time-slicing gives every process the CPU early at the price of more context switches"
-               if best_rt.algo == "RR" else ""))
-    fc, rr = by.get("FCFS"), by.get("RR")
-    if fc and rr:
-        out.append("Round Robin (q=%d) performed %d context switches against %d for FCFS; its avg TAT is %.2f vs %.2f "
-                   "for FCFS, showing the fairness/overhead trade-off." % (
-                       rr.quantum, rr.context_switches, fc.context_switches, rr.avg_tat, fc.avg_tat))
-    if fc:
-        longest = max(fc.metrics.items(), key=lambda kv: kv[1]["wt"])
-        out.append("FCFS shows the convoy effect: %s waits %d units because earlier arrivals run to completion first." % (
-            longest[0], longest[1]["wt"]))
-    pr = by.get("Priority")
-    if pr:
-        starved = max(pr.metrics.items(), key=lambda kv: kv[1]["wt"])
-        out.append("Priority scheduling makes %s (priority %d) wait %d units - low-priority work can starve; aging "
-                   "would be needed in a real OS." % (starved[0], starved[1]["priority"], starved[1]["wt"]))
-    if any(r.idle_time for r in results):
-        r0 = results[0]
-        out.append("The workload contains an idle gap (%d units); CPU utilisation is %.1f%% for every algorithm "
-                   "because total work is fixed and only ordering changes." % (r0.idle_time, r0.utilisation))
-    return out
-
-
-def memory_observations(compare, sweep, belady_sweep, partitions):
-    out = []
-    ranked = sorted(compare, key=lambda r: r.faults)
-    out.append("With %d frames the ranking by page faults is %s. Optimal (%d) is the theoretical lower bound; "
-               "LRU (%d) approximates it by using the past as a predictor of the future, while FIFO (%d) ignores "
-               "usage and evicts hot pages." % (
-                   compare[0].num_frames, " < ".join("%s=%d" % (r.algo, r.faults) for r in ranked),
-                   next(r.faults for r in compare if r.algo == "Optimal"),
-                   next(r.faults for r in compare if r.algo == "LRU"),
-                   next(r.faults for r in compare if r.algo == "FIFO")))
-    clock = next(r for r in compare if r.algo == "Clock")
-    out.append("Clock (second chance) gave %d faults - between FIFO and LRU - at the cost of one reference bit per "
-               "frame instead of full timestamps." % clock.faults)
-    out.append("Increasing frames reduces faults until every distinct page fits; in the sweep all algorithms "
-               "converge to the same minimum (%d faults) once frames >= distinct pages." % min(
-                   v[-1] for v in sweep.values()))
-    from modules.memory import find_belady
-    anomalies = find_belady(belady_sweep["FIFO"])
-    if anomalies:
-        a = anomalies[0]
-        out.append("Belady's anomaly reproduced: FIFO on 1 2 3 4 1 2 5 1 2 3 4 5 incurs %d faults with %d frames but "
-                   "%d faults with %d frames (more memory, more faults)." % (a[2], a[0], a[3], a[1]))
-    stack = [a for a in ("LRU", "Optimal") if not find_belady(belady_sweep[a])]
-    if stack:
-        out.append("%s never showed the anomaly: they are stack algorithms, so the set of pages in memory with n "
-                   "frames is always a subset of the set with n+1 frames." % " and ".join(stack))
-    if partitions:
-        best = min(partitions, key=lambda r: (len(r.unallocated), r.internal_fragmentation))
-        out.append("Fixed-partition allocation: %s fit gave the best result (%d unallocated, internal fragmentation "
-                   "%d); " % (best.strategy, len(best.unallocated), best.internal_fragmentation) +
-                   "; ".join("%s fit: %d unallocated, frag %d" % (r.strategy, len(r.unallocated),
-                             r.internal_fragmentation) for r in partitions) + ".")
-    return out
-
-
-def deadlock_observations(safety, request_results, detection_ok, detection_dead):
-    out = []
-    if safety:
-        out.append("Initial state is %s%s." % ("SAFE" if safety.safe else "UNSAFE",
-                   " with safe sequence <%s>" % ", ".join(safety.sequence) if safety.safe else ""))
-    for r in request_results:
-        out.append("Request: " + r.message + ".")
-    out.append("Banker's algorithm denies requests that would lead to an unsafe state, even though resources are "
-               "available - avoidance trades some utilisation for a guarantee of freedom from deadlock.")
-    if detection_dead is not None:
-        out.append("Detection: the first scenario has %s; after P2 asks for one more resource the deadlocked set is "
-                   "%s. Detection must be paired with a recovery policy (kill or roll back)." % (
-                       "no deadlock" if not detection_ok else "deadlock: " + ", ".join(detection_ok),
-                       ", ".join(detection_dead) or "none"))
-    return out
-
-
-def storage_observations(disk, alloc):
-    out = []
-    best = min(disk, key=lambda r: r.total)
-    worst = max(disk, key=lambda r: r.total)
-    by = dict((r.algo, r) for r in disk)
-    out.append("Disk scheduling: %s moves the head least (%d cylinders); %s is the worst (%d), %.0f%% more." % (
-        best.algo, best.total, worst.algo, worst.total, 100.0 * (worst.total - best.total) / best.total
-        if best.total else 0))
-    if "SCAN" in by and "LOOK" in by:
-        out.append("LOOK saves %d cylinders over SCAN (%d vs %d) by turning at the last request instead of the disk "
-                   "edge; C-LOOK saves %d over C-SCAN." % (by["SCAN"].total - by["LOOK"].total, by["LOOK"].total,
-                   by["SCAN"].total, by["C-SCAN"].total - by["C-LOOK"].total))
-    out.append("SSTF has low movement but can starve distant requests; C-SCAN/C-LOOK trade extra movement (the return "
-               "jump is counted) for more uniform waiting time.")
-    c, l, i = alloc["contiguous"], alloc["linked"], alloc["indexed"]
-    out.append("File allocation: contiguous allocation gives the cheapest access (avg %.2f block reads) but left %d free "
-               "fragments (external fragmentation %.1f%%) and rejected %d operation(s); linked and indexed use any free "
-               "block so they rejected %d and %d." % (c["avg_access_cost"], c["free_fragments"], c["external_frag_pct"],
-               len(c["rejected"]), len(l["rejected"]), len(i["rejected"])))
-    out.append("Linked allocation has the worst direct-access cost (avg %.2f, worst %d reads, since blocks are reached by "
-               "following pointers); indexed costs a constant %d reads but spends %d extra index block(s)." % (
-                   l["avg_access_cost"], l["worst_access_cost"], i["worst_access_cost"], i["extra_blocks"]))
+    best = min(results, key=lambda r: r.total)
+    worst = max(results, key=lambda r: r.total)
+    pct = 100.0 * (worst.total - best.total) / best.total if best.total else 0.0
+    out.append("%s moves the head least (%d cylinders); %s is the worst (%d), %.0f%% more." % (
+        best.algo, best.total, worst.algo, worst.total, pct))
+    out.append("LOOK saves %d cylinders over SCAN (%d vs %d) by turning at the last request instead of the disk "
+               "edge; C-LOOK saves %d over C-SCAN." % (by["SCAN"].total - by["LOOK"].total, by["LOOK"].total,
+               by["SCAN"].total, by["C-SCAN"].total - by["C-LOOK"].total))
+    out.append("FCFS is fair but ignores head position (avg seek %.1f vs %.1f for SSTF)." % (
+        by["FCFS"].avg_seek, by["SSTF"].avg_seek))
+    out.append("SSTF has low movement but can starve distant requests; C-SCAN/C-LOOK trade extra movement (the "
+               "return jump is counted) for more uniform waiting time.")
+    if experiment:
+        xs, series = experiment
+        winner = min(series, key=lambda a: series[a][-1])
+        out.append("Over random queues, %s has the lowest mean movement at the longest queue (%d requests): %g "
+                   "cylinders vs %g for FCFS." % (winner, xs[-1], series[winner][-1], series["FCFS"][-1]))
+        out.append("FCFS grows almost linearly with queue length, while the SCAN family flattens because each sweep "
+                   "serves more requests per pass.")
     return out
 
 
 def write_analysis_report(path, sections):
-    """Write outputs/analysis_report.md.  ``sections`` is [(title, [str|table-rows...])]."""
+    """Write analysis_report.md.  ``sections`` is [(title, [str | (headers, rows)])]."""
     os.makedirs(os.path.dirname(path), exist_ok=True)
-    lines = ["# OSRM - Analysis Report", "", "Author: %s" % AUTHOR, "",
+    lines = ["# %s - Analysis Report" % APP_NAME, "", "Author: %s" % AUTHOR, "",
              "_Generated automatically from the simulation results of this run._", ""]
     for title, items in sections:
         lines += ["## " + title, ""]

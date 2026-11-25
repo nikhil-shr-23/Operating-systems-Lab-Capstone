@@ -2,20 +2,5 @@
   "requests": [98, 183, 37, 122, 14, 124, 65, 67],
   "head": 53,
   "disk_size": 200,
-  "direction": "up",
-  "total_blocks": 70,
-  "file_ops": [
-    {"op": "create", "name": "A", "size": 8},
-    {"op": "create", "name": "B", "size": 6},
-    {"op": "create", "name": "C", "size": 10},
-    {"op": "create", "name": "D", "size": 5},
-    {"op": "create", "name": "E", "size": 9},
-    {"op": "delete", "name": "B"},
-    {"op": "delete", "name": "D"},
-    {"op": "create", "name": "F", "size": 12},
-    {"op": "create", "name": "G", "size": 7},
-    {"op": "create", "name": "A", "size": 3},
-    {"op": "create", "name": "H", "size": 20},
-    {"op": "create", "name": "I", "size": 4}
-  ]
+  "direction": "up"
 }

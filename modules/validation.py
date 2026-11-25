@@ -4,7 +4,6 @@ All problems with user supplied data are reported by raising
 :class:`ValidationError` with a meaningful message - callers (the CLI and the
 menu) catch it and print a friendly error instead of a traceback.
 """
-import csv
 import io
 import json
 import os
@@ -83,75 +82,17 @@ def parse_int_list(value, name, minimum=None):
     return [parse_int(p, "%s item" % name, minimum) for p in parts]
 
 
-def validate_quantum(quantum):
-    """Time quantum must be an integer > 0."""
-    return parse_int(quantum, "Time quantum", 1)
-
-
-def validate_frames(frames):
-    """Number of frames must be an integer > 0."""
-    return parse_int(frames, "Number of frames", 1)
-
-
-def validate_reference_string(refs):
-    """Reference string must be a non-empty list of non-negative integers."""
-    pages = parse_int_list(refs, "Reference string", 0)
-    if not pages:
-        raise ValidationError("Reference string is empty.")
-    return pages
-
-
-# -------------------------------------------------------------- processes
-def validate_processes(rows):
-    """Validate (pid, arrival, burst, priority) rows; return normalised tuples."""
-    if not rows:
-        raise ValidationError("Process list is empty.")
-    seen = set()
-    result = []
-    for row in rows:
-        pid, arrival, burst, priority = row
-        pid = str(pid).strip()
-        if not pid:
-            raise ValidationError("Process id must not be empty.")
-        if pid in seen:
-            raise ValidationError("Duplicate process id: %s" % pid)
-        seen.add(pid)
-        arrival = parse_int(arrival, "Arrival time of %s" % pid)
-        burst = parse_int(burst, "Burst time of %s" % pid)
-        priority = parse_int(priority, "Priority of %s" % pid)
-        if arrival < 0:
-            raise ValidationError("Arrival time of %s must not be negative (got %d)." % (pid, arrival))
-        if burst <= 0:
-            raise ValidationError("Burst time of %s must be greater than 0 (got %d)." % (pid, burst))
-        if priority < 0:
-            raise ValidationError("Priority of %s must not be negative (got %d)." % (pid, priority))
-        result.append((pid, arrival, burst, priority))
-    return result
-
-
-def load_processes_csv(path):
-    """Read a ``pid,arrival,burst,priority`` CSV into validated tuples."""
-    text = read_text_file(path, "process CSV file")
+def parse_float(value, name, minimum=None):
+    """Convert ``value`` to float and enforce an optional lower bound."""
     try:
-        reader = csv.DictReader(io.StringIO(text))
-        header = [h.strip().lower() for h in (reader.fieldnames or [])]
-        for col in ("pid", "arrival", "burst"):
-            if col not in header:
-                raise ValidationError(
-                    "Malformed CSV %s: missing column '%s' (expected pid,arrival,burst,priority)." % (path, col))
-        rows = []
-        for line_no, raw in enumerate(reader, start=2):
-            rec = dict((k.strip().lower(), v) for k, v in raw.items() if k is not None)
-            if all((v is None or not str(v).strip()) for v in rec.values()):
-                continue  # blank line
-            if None in raw.values() or None in raw or any(rec.get(c) is None for c in ("pid", "arrival", "burst")):
-                raise ValidationError("Malformed CSV %s line %d: wrong number of fields." % (path, line_no))
-            prio = rec.get("priority")
-            prio = 0 if prio is None or not str(prio).strip() else prio
-            rows.append((rec["pid"], rec["arrival"], rec["burst"], prio))
-    except csv.Error as exc:
-        raise ValidationError("Malformed CSV %s: %s" % (path, exc))
-    return validate_processes(rows)
+        number = float(str(value).strip())
+    except (TypeError, ValueError):
+        raise ValidationError("%s must be a number, got %r." % (name, value))
+    if number != number or number in (float("inf"), float("-inf")):
+        raise ValidationError("%s must be a finite number, got %r." % (name, value))
+    if minimum is not None and number < minimum:
+        raise ValidationError("%s must be >= %g, got %g." % (name, minimum, number))
+    return number
 
 
 # ------------------------------------------------------------------- disk
@@ -169,74 +110,3 @@ def validate_disk(requests, head, size, direction="up"):
     if direction not in ("up", "down"):
         raise ValidationError("Direction must be 'up' or 'down', got %r." % direction)
     return reqs, head, size, direction
-
-
-# ----------------------------------------------------------------- banker
-def matrix(value, name):
-    if not isinstance(value, (list, tuple)) or not value:
-        raise ValidationError("%s must be a non-empty matrix (list of rows)." % name)
-    rows = []
-    for i, row in enumerate(value):
-        if not isinstance(row, (list, tuple)):
-            raise ValidationError("%s row %d is not a list." % (name, i))
-        rows.append([parse_int(x, "%s[%d]" % (name, i)) for x in row])
-    return rows
-
-
-def validate_banker(available, maximum, allocation):
-    """Check dimensions, signs and allocation <= max for Banker's algorithm."""
-    avail = parse_int_list(available, "Available vector")
-    if not avail:
-        raise ValidationError("Available vector is empty.")
-    mx = matrix(maximum, "Max matrix")
-    al = matrix(allocation, "Allocation matrix")
-    m = len(avail)
-    if len(mx) != len(al):
-        raise ValidationError("Matrix dimensions mismatch: Max has %d rows but Allocation has %d." % (len(mx), len(al)))
-    for name, mat in (("Max", mx), ("Allocation", al)):
-        for i, row in enumerate(mat):
-            if len(row) != m:
-                raise ValidationError("Matrix dimensions mismatch: %s row %d has %d columns, expected %d." % (
-                    name, i, len(row), m))
-    if any(v < 0 for v in avail):
-        raise ValidationError("Available vector contains a negative value.")
-    for name, mat in (("Max", mx), ("Allocation", al)):
-        for i, row in enumerate(mat):
-            if any(v < 0 for v in row):
-                raise ValidationError("%s matrix row %d contains a negative value." % (name, i))
-    for i in range(len(mx)):
-        for j in range(m):
-            if al[i][j] > mx[i][j]:
-                raise ValidationError("Allocation exceeds Max for P%d, resource %d (%d > %d)." % (
-                    i, j, al[i][j], mx[i][j]))
-    return avail, mx, al
-
-
-def validate_request(request, num_resources):
-    """A resource request vector must have the right length and no negatives."""
-    req = parse_int_list(request, "Request vector")
-    if len(req) != num_resources:
-        raise ValidationError("Request vector has %d entries, expected %d." % (len(req), num_resources))
-    if any(v < 0 for v in req):
-        raise ValidationError("Request vector contains a negative value.")
-    return req
-
-
-# ----------------------------------------------------------------- memory
-def validate_partitions(sizes, procs):
-    """Validate fixed partition sizes and (name, size) process requests."""
-    parts = parse_int_list(sizes, "Partition size", 1)
-    if not parts:
-        raise ValidationError("Partition list is empty.")
-    out = []
-    seen = set()
-    for item in procs or []:
-        name, size = item
-        name = str(name).strip()
-        if not name or name in seen:
-            raise ValidationError("Process name %r is empty or duplicated." % name)
-        seen.add(name)
-        out.append((name, parse_int(size, "Size of %s" % name, 1)))
-    if not out:
-        raise ValidationError("Process list for partition allocation is empty.")
-    return parts, out

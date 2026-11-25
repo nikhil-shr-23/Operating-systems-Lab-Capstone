@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# OSRM launcher.  Usage: ./run.sh {menu|demo|test|gen-workload N [seed]|sysinfo|logsummary|clean}
+# Disk Scheduling Simulator launcher.  Usage: ./run.sh {menu|demo|test|gen N [seed]|sysinfo|logsummary|clean}
 # Works with macOS bash 3.2 and Linux bash.
 cd "$(dirname "$0")" || exit 1
 ROOT="$(pwd)"
@@ -16,12 +16,13 @@ fi
 
 usage() {
   cat <<USAGE
-OSRM - Operating System Resource Manager Simulator
+Disk Scheduling Simulator
 Usage: ./run.sh <command>
   menu                      interactive menu (default)
   demo                      run everything non-interactively (saves outputs/demo_trace.txt)
   test                      run the unit tests (saves outputs/test_results.txt)
-  gen-workload N [seed]     generate a random workload CSV with N processes -> outputs/generated_workload.csv
+  analyze                   tables, CSVs, charts and analysis report -> outputs/
+  gen N [seed]              generate N random disk requests (Bash) -> outputs/generated_requests.json
   sysinfo                   live system snapshot
   logsummary                summarise logs/osrm.log by level and module
   clean                     remove generated outputs, logs and caches
@@ -35,12 +36,13 @@ case "$cmd" in
   demo)  exec "$PY" main.py demo ;;
   test)
     # tests log to a separate file so logs/osrm.log only holds application runs
-    OSRM_LOG_FILE="$ROOT/logs/test.log" "$PY" tests/test_osrm.py -v 2>&1 | tee outputs/test_results.txt
+    OSRM_LOG_FILE="$ROOT/logs/test.log" "$PY" tests/test_disk.py -v 2>&1 | tee outputs/test_results.txt
     exit "${PIPESTATUS[0]}" ;;
-  gen-workload)
-    if [ $# -lt 1 ]; then echo "Usage: ./run.sh gen-workload N [seed]" >&2; exit 2; fi
-    bash scripts/gen_workload.sh "$1" "$2" outputs/generated_workload.csv || exit $?
-    echo "Run it with:  $PY main.py sched --file outputs/generated_workload.csv" ;;
+  analyze) exec "$PY" main.py analyze "$@" ;;
+  gen)
+    if [ $# -lt 1 ]; then echo "Usage: ./run.sh gen N [seed]" >&2; exit 2; fi
+    "$PY" main.py gen "$1" ${2:+--seed "$2"} --out outputs/generated_requests.json || exit $?
+    echo "Run it with:  $PY main.py simulate --file outputs/generated_requests.json" ;;
   sysinfo)    exec bash scripts/sysinfo.sh ;;
   logsummary) exec bash scripts/log_summary.sh "$ROOT/logs/osrm.log" ;;
   clean)

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# log_summary.sh [logfile] - summarise an OSRM log by level and by module.
+# log_summary.sh [logfile] - summarise an disk simulator log by level and by module.
 # Log format: time | LEVEL | module | message
 LOG="${1:-$(cd "$(dirname "$0")/.." && pwd)/logs/osrm.log}"
 if [ ! -f "$LOG" ]; then echo "Error: log file not found: $LOG" >&2; exit 1; fi

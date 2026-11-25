@@ -38,16 +38,14 @@ def run_script(name, args=(), timeout=DEFAULT_TIMEOUT):
     return proc.stdout
 
 
-def gen_workload(n, seed=None, out_path=None):
-    """Generate a random workload CSV via gen_workload.sh; returns the CSV path."""
-    n = parse_int(n, "Number of processes", 1, 1000)
-    if seed is not None and seed != "":
-        seed = parse_int(seed, "Seed", 0)
-    else:
-        seed = ""
-    out_path = out_path or os.path.join(OUTPUT_DIR, "generated_workload.csv")
+def gen_requests(n, seed=None, out_path=None, disk_size=200):
+    """Generate a random disk workload JSON via gen_requests.sh; returns the JSON path."""
+    n = parse_int(n, "Number of requests", 1, 1000)
+    disk_size = parse_int(disk_size, "Disk size", 2, 100000)
+    seed = parse_int(seed, "Seed", 0) if seed not in (None, "") else ""
+    out_path = out_path or os.path.join(OUTPUT_DIR, "generated_requests.json")
     try:
-        run_script("gen_workload.sh", [n, seed, out_path])
+        run_script("gen_requests.sh", [n, seed, out_path, disk_size])
     except BashToolError as exc:
         raise ValidationError(str(exc))
     return out_path
